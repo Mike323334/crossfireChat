@@ -61,12 +61,12 @@ def normalize_text(text: str) -> str:
         c for c in unicodedata.normalize('NFD', text)
         if unicodedata.category(c) != 'Mn'
     )
+    text = re.sub(r"[^\w\s]", "", text)  # remove punctuation
     return text
 
 def clean_word(word: str) -> str:
     word = normalize_text(word)
-    word = re.sub(r"[^\wáéíóúñü]", "", word)
-    return word
+    return re.sub(r"[^\w]", "", word)
 
 # ---------------------------
 # Static Overrides
@@ -76,19 +76,20 @@ SPANISH_OVERRIDE = {
     "porque","por","para","si","no","bien","mal","muy","estoy","eres","es",
     "somos","son","hay","tengo","quiero","puedo","de","el","la","lo","un",
     "una","yo","tu","el","ella","nosotros","ellos","usted","ustedes",
-    "mas","sí","más","también","ahora","ayer","mañana","hoy","nunca","siempre",
+    "mas","sí","más","tambien","ahora","ayer","manana","hoy","nunca","siempre",
     "alguno","ninguno","algo","nada","todos","todas","ellos","ellas",
     "vamos","vamosa","vienes","vengo","creo","parece","entiendo","entiendes",
     "amigo","amiga","chico","chica","familia","gente","persona","personas",
-    "grande","pequeño","pequeña","bueno","buena","malo","mala","nuevo","nueva",
+    "grande","pequeno","pequena","bueno","buena","malo","mala","nuevo","nueva",
     "viejo","vieja","mejor","peor","antes","despues","dentro","fuera",
-    "arriba","abajo","cerca","lejos","siéntate","levántate","hablar","hablo",
+    "arriba","abajo","cerca","lejos","sientate","levantate","hablar","hablo",
     "hablas","comer","beber","leer","escribir","ver","mirar","escuchar",
-    "oír","sentir","pensar","saber","conocer","entender","ayuda","ayudar",
+    "oir","sentir","pensar","saber","conocer","entender","ayuda","ayudar",
     "trabajo","dinero","escuela","clase","profesor","profesora","amigos",
     "familia","casa","hogar","vida","amor","feliz","triste","enojado","enojada",
-    "contento","contenta","cansado","cansada"
+    "contento","contenta","cansado","cansada","estas","ahi","todo","bien"
 }
+
 ENGLISH_OVERRIDE = {
     "hi","hello","hey","thanks","ok","yes","no","please",
     "i","you","he","she","we","they","am","are","is",
@@ -122,6 +123,7 @@ PHRASE_OVERRIDE = {
     "thx": "en",
     "np": "en"
 }
+
 # ---------------------------
 # Learning New Words
 # ---------------------------
@@ -135,7 +137,7 @@ def learn_override(word: str, lang: str):
         logger.info(f"Learned new {lang} override word: {word}")
 
 # ---------------------------
-# Google Translate fallback for unknown short phrases
+# Google Translate fallback
 # ---------------------------
 def detect_with_google(text: str) -> str:
     try:
@@ -153,6 +155,7 @@ def detect_with_google(text: str) -> str:
 def detect_lang_safe(text: str) -> str:
     try:
         norm_text = normalize_text(text)
+        words = [clean_word(w) for w in norm_text.split() if w]
 
         # 1️⃣ Phrase-level overrides
         for phrase, lang in sorted(PHRASE_OVERRIDE.items(), key=lambda x: -len(x[0])):
@@ -160,14 +163,13 @@ def detect_lang_safe(text: str) -> str:
                 learn_override(phrase, lang)
                 return lang
 
-        words = [clean_word(w) for w in norm_text.split() if w]
-
         # 2️⃣ Static word overrides
-        for word in words:
-            if word in SPANISH_OVERRIDE:
-                return "es"
-            if word in ENGLISH_OVERRIDE:
-                return "en"
+        spanish_hits = sum(1 for w in words if w in SPANISH_OVERRIDE)
+        english_hits = sum(1 for w in words if w in ENGLISH_OVERRIDE)
+        if spanish_hits >= 2:
+            return "es"
+        if english_hits >= 2:
+            return "en"
 
         # 3️⃣ Learned overrides
         for word in words:
@@ -176,7 +178,7 @@ def detect_lang_safe(text: str) -> str:
             if word in DYNAMIC_OVERRIDES["en"]:
                 return "en"
 
-        # 4️⃣ FastText fallback (for longer texts)
+        # 4️⃣ FastText fallback (longer texts)
         if len(words) >= 3:
             ft_model = get_ft_model()
             labels, probs = ft_model.predict(norm_text, k=1)
@@ -184,11 +186,11 @@ def detect_lang_safe(text: str) -> str:
             if label in ["es", "en"]:
                 return label
 
-        # 5️⃣ Short phrase: use Google Translate
+        # 5️⃣ Short phrases: Google Translate
         if len(words) <= 2:
             return detect_with_google(norm_text)
 
-        # 6️⃣ Accent heuristic
+        # 6️⃣ Accents heuristic
         if any(c in "áéíóúñü" for c in norm_text):
             return "es"
 
@@ -199,13 +201,12 @@ def detect_lang_safe(text: str) -> str:
         return "en"
 
 # ---------------------------
-# Translation Safety + Learning
+# Translation + Learning
 # ---------------------------
 def force_language(text, target_lang, original_text=None):
     try:
         detected = detect_lang_safe(text)
         if detected == target_lang:
-            # Learn unknown words
             words = [clean_word(w) for w in normalize_text(text).split()]
             for w in words:
                 if len(w) <= 4:
@@ -214,7 +215,6 @@ def force_language(text, target_lang, original_text=None):
 
         translated = GoogleTranslator(source='auto', target=target_lang).translate(text)
 
-        # Learn words from original input
         if original_text:
             words = [clean_word(w) for w in normalize_text(original_text).split()]
             for w in words:
@@ -290,4 +290,4 @@ User message:
 # Local test
 # ---------------------------
 if __name__ == "__main__":
-    print(query_character("Gideon", "q tal?"))
+    print(query_character("Gideon", "estas ahi?"))
