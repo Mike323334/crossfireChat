@@ -4,7 +4,6 @@ from deep_translator import GoogleTranslator
 from .config import GROQ_API_KEY, MODEL_NAME
 from backend.search import get_relevant_chunks
 import unicodedata
-import fasttext
 import os
 import json
 import re
@@ -17,11 +16,6 @@ logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
 )
 logger = logging.getLogger("lang_pipeline")
-
-# ---------------------------
-# FastText Model Path
-# ---------------------------
-MODEL_PATH = os.path.join(os.path.dirname(__file__), "fasttext/lid.176.ftz")
 
 # ---------------------------
 # Dynamic Override Storage
@@ -39,18 +33,6 @@ def save_overrides(data):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 DYNAMIC_OVERRIDES = load_overrides()
-
-# ---------------------------
-# Lazy model loader
-# ---------------------------
-def get_ft_model():
-    if not hasattr(get_ft_model, "model"):
-        logger.info("Loading FastText model...")
-        if not os.path.exists(MODEL_PATH):
-            raise FileNotFoundError(f"FastText model not found at {MODEL_PATH}")
-        get_ft_model.model = fasttext.load_model(MODEL_PATH)
-        logger.info("FastText model loaded successfully")
-    return get_ft_model.model
 
 # ---------------------------
 # Normalize text
@@ -111,7 +93,7 @@ def learn_override(word: str, lang: str):
         logger.info(f"Learned new {lang} override word: {word}")
 
 # ---------------------------
-# Google Translate fallback for unknown short phrases
+# Google Translate detection for unknown phrases
 # ---------------------------
 def detect_with_google(text: str) -> str:
     try:
@@ -152,19 +134,11 @@ def detect_lang_safe(text: str) -> str:
             if word in DYNAMIC_OVERRIDES["en"]:
                 return "en"
 
-        # 4️⃣ FastText fallback (for longer texts)
-        if len(words) >= 3:
-            ft_model = get_ft_model()
-            labels, probs = ft_model.predict(norm_text, k=1)
-            label = labels[0].replace("__label__", "")
-            if label in ["es", "en"]:
-                return label
-
-        # 5️⃣ Short phrase: use Google Translate
-        if len(words) <= 2:
+        # 4️⃣ Short phrase or unknown → use Google Translate
+        if len(words) <= 3:
             return detect_with_google(norm_text)
 
-        # 6️⃣ Accent heuristic
+        # 5️⃣ Accent heuristic
         if any(c in "áéíóúñü" for c in norm_text):
             return "es"
 
