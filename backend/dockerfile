@@ -26,4 +26,4 @@ COPY backend/fasttext/ ./backend/fasttext/
 EXPOSE 10000
 
 # Run the app (adjust if using uvicorn/Flask/etc.)
-CMD ["python", "backend/app.py"]
+CMD ["python", "-m", "backend.app"]
