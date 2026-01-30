@@ -1,7 +1,7 @@
 import logging
 import requests
 from deep_translator import GoogleTranslator
-from backend.config import GROQ_API_KEY, MODEL_NAME
+from .config import GROQ_API_KEY, MODEL_NAME
 from backend.search import get_relevant_chunks
 import unicodedata
 import fasttext
