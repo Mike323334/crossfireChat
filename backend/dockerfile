@@ -15,6 +15,7 @@ COPY backend/requirements.txt ./requirements.txt
 
 # Upgrade pip / setuptools
 RUN pip install --upgrade pip setuptools wheel
+RUN pip install --no-cache-dir uvicorn==0.23.1
 
 # Install Python deps (cld3 prebuilt wheel)
 
