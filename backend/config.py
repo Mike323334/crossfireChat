@@ -1,4 +1,8 @@
-# Configuración básica
+import os
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")  # Will read from Render environment
+MODEL_NAME = os.getenv("MODEL_NAME", "llama-3.3-70b-versatile")  # Default if not set
+
 
 BOOK_PATHS = {
     "eva": [
