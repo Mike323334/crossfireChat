@@ -70,7 +70,24 @@ SPANISH_OVERRIDE = {
     "hola", "adiós", "gracias", "buenos", "buenas", "tarde", "noche", "día",
 
     # Misc short words
-    "lo", "la", "el", "un", "una", "y", "o", "pero", "porque"
+    "lo", "la", "el", "un", "una", "y", "o", "pero", "porque",
+     "hola?", "adios?", "gracias?", "que?", "como?", "cuando?", "donde?",
+    "quien?", "cual?", "porque?", "por?", "para?", "si?", "no?", "bien?",
+    "mal?", "muy?", "estoy?", "eres?", "es?", "somos?", "son?", "hay?",
+    "tengo?", "quiero?", "puedo?", "de?", "el?", "la?", "lo?", "un?", "una?",
+    "yo?", "tú?", "él?", "ella?", "nosotros?", "nosotras?", "vosotros?", "vosotras?", "ellos?", "ellas?", "usted?", "ustedes?",
+
+    "estas?", "esta?", "soy?", "tiene?", "tenemos?",
+
+    "qué?", "cuándo?", "dónde?", "quién?", "cuál?", "por qué?", "para qué?",
+
+    "a?", "en?", "con?", "sin?", "sobre?", "entre?",
+
+    "sí?", "ya?", "más?", "menos?", "todo?", "nada?",
+
+    "adiós?", "buenos?", "buenas?", "tarde?", "noche?", "día?",
+
+    "y?", "o?", "pero?"
 }
 
 ENGLISH_OVERRIDE = {
