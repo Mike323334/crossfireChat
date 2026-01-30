@@ -1,5 +1,5 @@
 export async function sendMessage(character, message) {
-  const res = await fetch(`http://localhost:8000/chat/${character}`, {
+  const res = await fetch(`https://crossfirechat.onrender.com/chat/${character}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

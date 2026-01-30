@@ -1,5 +1,5 @@
 # Configuración básica
-GROQ_API_KEY = "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"
+
 BOOK_PATHS = {
     "eva": [
         "backend/books/Crossfire1.pdf",

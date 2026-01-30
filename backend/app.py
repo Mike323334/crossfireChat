@@ -7,7 +7,7 @@ app = FastAPI()
 # ✅ CORS CONFIG
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Vite frontend
+    allow_origins=["https://crossfirechat-1.onrender.com"],  # Vite frontend
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
