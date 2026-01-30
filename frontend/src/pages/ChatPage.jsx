@@ -13,6 +13,7 @@ export default function ChatPage({ character, setCharacter }) {
   const MIN_DISTANCE = 170;
 
   const gideonPhrases = [
+    "My entire existence has been defined by my need for you, Eva. You're the reason I breathe, the reason I live.",
     "Eres la única persona que ha logrado hacer que me sienta vivo...",
     "La pasión que arde dentro de mí es difícil de controlar cuando estoy cerca de ti, Eva.",
     "Eva, mi amor, tu presencia me hace sentir vivo...",

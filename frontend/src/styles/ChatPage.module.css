@@ -1,3 +1,31 @@
+.messageRow {
+  width: 100%;
+  display: flex;
+  margin: 8px 0;
+}
+
+/* USER MESSAGE — FULL WIDTH BAR */
+.userBubble {
+  width: 100%;
+  background-color: #ff3b3b; /* red */
+  color: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  box-sizing: border-box; /* prevents overflow */
+  word-wrap: break-word;
+}
+
+/* BOT MESSAGE — normal chat bubble */
+.botBubble {
+  max-width: 75%;
+  background-color: #f1f1f1;
+  color: #222;
+  padding: 10px 14px;
+  border-radius: 14px;
+}
+
+
+
 .floatingPhrase {
   position: fixed;
   width: 260px;

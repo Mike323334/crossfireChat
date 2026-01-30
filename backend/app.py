@@ -5,8 +5,11 @@ from .routes import router
 import os
 import fasttext
 
-# ✅ Load environment variables
- # Ensure these are set via Render env vars
+# ✅ Load environment variables from config
+from .config import GROQ_API_KEY, MODEL_NAME  # Make sure GROQ_API_KEY is set in Render env vars
+
+if not GROQ_API_KEY:
+    raise ValueError("GROQ_API_KEY environment variable is not set")
 
 # ✅ Load FastText model safely
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "fasttext/lid.176.ftz")
@@ -32,5 +35,12 @@ app.include_router(router)
 
 # ✅ Run app locally with Uvicorn
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-  
+    import uvicorn
+
+    port = int(os.environ.get("PORT", 5000))  # Default 5000 for local dev
+    uvicorn.run(
+        "backend.app:app",  # points to FastAPI app object
+        host="0.0.0.0",
+        port=port,
+        reload=True  # auto-reload for local development
+    )
