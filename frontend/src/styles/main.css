@@ -1,0 +1,22 @@
+.chat-window {
+  border: 1px solid #ccc;
+  padding: 10px;
+  height: 400px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
+.user-msg {
+  text-align: right;
+  color: blue;
+}
+.char-msg {
+  text-align: left;
+  color: green;
+}
+input {
+  width: 70%;
+  padding: 5px;
+}
+button {
+  padding: 5px 10px;
+}

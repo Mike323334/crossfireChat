@@ -1,0 +1,4 @@
+- [x] Add blink animation to frontend/src/styles/main.css
+- Modify frontend/src/pages/ChatPage.jsx to conditionally render the floating phrase when character is "Gideon"
+- Use React hooks to change the position randomly every 3 seconds
+- Test the feature by running the app and chatting with Gideon
