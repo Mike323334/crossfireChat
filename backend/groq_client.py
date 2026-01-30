@@ -1,6 +1,6 @@
 import logging
 import requests
-from deep_translator import GoogleTranslator
+from google.cloud import translate_v2 as translate  # Google Cloud Translate API
 from .config import GROQ_API_KEY, MODEL_NAME
 from backend.search import get_relevant_chunks
 import unicodedata
@@ -33,6 +33,21 @@ def save_overrides(data):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 DYNAMIC_OVERRIDES = load_overrides()
+
+# ---------------------------
+# Google Cloud Translate client
+# ---------------------------
+translate_client = translate.Client()
+
+def detect_language_google_cloud(text: str) -> str:
+    """Detect the language of a text using Google Cloud Translate API."""
+    try:
+        result = translate_client.detect_language(text)
+        lang = result['language']
+        return lang if lang in ['es', 'en'] else 'en'
+    except Exception as e:
+        logger.error(f"Google Cloud detection failed: {e}")
+        return 'en'
 
 # ---------------------------
 # Normalize text
@@ -93,19 +108,6 @@ def learn_override(word: str, lang: str):
         logger.info(f"Learned new {lang} override word: {word}")
 
 # ---------------------------
-# Google Translate detection for unknown phrases
-# ---------------------------
-def detect_with_google(text: str) -> str:
-    try:
-        translated = GoogleTranslator(source='auto', target='es').translate(text)
-        if translated.lower() != text.lower():
-            return "es"
-        return "en"
-    except Exception as e:
-        logger.error(f"Google Translate detection failed: {e}")
-        return "en"
-
-# ---------------------------
 # Language Detection
 # ---------------------------
 def detect_lang_safe(text: str) -> str:
@@ -134,15 +136,8 @@ def detect_lang_safe(text: str) -> str:
             if word in DYNAMIC_OVERRIDES["en"]:
                 return "en"
 
-        # 4️⃣ Short phrase or unknown → use Google Translate
-        if len(words) <= 3:
-            return detect_with_google(norm_text)
-
-        # 5️⃣ Accent heuristic
-        if any(c in "áéíóúñü" for c in norm_text):
-            return "es"
-
-        return "en"
+        # 4️⃣ Use Google Cloud detection for short/unknown phrases
+        return detect_language_google_cloud(text)
 
     except Exception as e:
         logger.error(f"Language detection error: {e}")
@@ -240,4 +235,4 @@ User message:
 # Local test
 # ---------------------------
 if __name__ == "__main__":
-    print(query_character("Gideon", "q tal?"))
+    print(query_character("Gideon", "estas ahi?"))
