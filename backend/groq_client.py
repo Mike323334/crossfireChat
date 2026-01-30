@@ -6,6 +6,8 @@ from backend.search import get_relevant_chunks
 import unicodedata
 import fasttext
 import os
+import json
+import re
 
 # ---------------------------
 # Logging
@@ -22,7 +24,24 @@ logger = logging.getLogger("lang_pipeline")
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "fasttext/lid.176.ftz")
 
 # ---------------------------
-# Lazy model loader (Render-safe)
+# Dynamic Override Storage
+# ---------------------------
+OVERRIDE_PATH = os.path.join(os.path.dirname(__file__), "language_overrides.json")
+
+def load_overrides():
+    if not os.path.exists(OVERRIDE_PATH):
+        return {"es": [], "en": []}
+    with open(OVERRIDE_PATH, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+def save_overrides(data):
+    with open(OVERRIDE_PATH, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+DYNAMIC_OVERRIDES = load_overrides()
+
+# ---------------------------
+# Lazy model loader
 # ---------------------------
 def get_ft_model():
     if not hasattr(get_ft_model, "model"):
@@ -44,56 +63,26 @@ def normalize_text(text: str) -> str:
     )
     return text
 
+def clean_word(word: str) -> str:
+    word = normalize_text(word)
+    word = re.sub(r"[^\wáéíóúñü]", "", word)
+    return word
+
 # ---------------------------
-# Short word overrides
+# Static Overrides
 # ---------------------------
 SPANISH_OVERRIDE = {
-    "hola", "adios", "gracias", "que", "como", "cuando", "donde",
-    "quien", "cual", "porque", "por", "para", "si", "no", "bien",
-    "mal", "muy", "estoy", "eres", "es", "somos", "son", "hay",
-    "tengo", "quiero", "puedo", "de", "el", "la", "lo", "un", "una",
-        "yo", "tú", "él", "ella", "nosotros", "nosotras", "vosotros", "vosotras", "ellos", "ellas", "usted", "ustedes",
-
-    # Common short verbs
-    "estoy", "estas", "esta", "es", "soy", "eres", "somos", "son", "tengo", "tiene", "tenemos", "quiero", "puedo",
-
-    # Question words
-    "qué", "como", "cuándo", "dónde", "quién", "cuál", "por qué", "para qué",
-
-    # Short prepositions / connectors
-    "a", "de", "en", "con", "sin", "por", "para", "sobre", "entre",
-
-    # Common short adverbs / adjectives
-    "sí", "no", "bien", "mal", "muy", "ya", "más", "menos", "todo", "nada",
-
-    # Greetings / polite words
-    "hola", "adiós", "gracias", "buenos", "buenas", "tarde", "noche", "día",
-
-    # Misc short words
-    "lo", "la", "el", "un", "una", "y", "o", "pero", "porque",
-     "hola?", "adios?", "gracias?", "que?", "como?", "cuando?", "donde?",
-    "quien?", "cual?", "porque?", "por?", "para?", "si?", "no?", "bien?",
-    "mal?", "muy?", "estoy?", "eres?", "es?", "somos?", "son?", "hay?",
-    "tengo?", "quiero?", "puedo?", "de?", "el?", "la?", "lo?", "un?", "una?",
-    "yo?", "tú?", "él?", "ella?", "nosotros?", "nosotras?", "vosotros?", "vosotras?", "ellos?", "ellas?", "usted?", "ustedes?",
-
-    "estas?", "esta?", "soy?", "tiene?", "tenemos?",
-
-    "qué?", "cuándo?", "dónde?", "quién?", "cuál?", "por qué?", "para qué?",
-
-    "a?", "en?", "con?", "sin?", "sobre?", "entre?",
-
-    "sí?", "ya?", "más?", "menos?", "todo?", "nada?",
-
-    "adiós?", "buenos?", "buenas?", "tarde?", "noche?", "día?",
-
-    "y?", "o?", "pero?"
+    "hola","adios","gracias","que","como","cuando","donde","quien","cual",
+    "porque","por","para","si","no","bien","mal","muy","estoy","eres","es",
+    "somos","son","hay","tengo","quiero","puedo","de","el","la","lo","un",
+    "una","yo","tu","el","ella","nosotros","ellos","usted","ustedes",
+    "mas","sí","más"
 }
 
 ENGLISH_OVERRIDE = {
-    "hi", "hello", "hey", "thanks", "ok", "yes", "no", "please",
-    "i", "you", "he", "she", "we", "they", "am", "are", "is",
-    "have", "has", "do", "does", "can", "could", "would", "will"
+    "hi","hello","hey","thanks","ok","yes","no","please",
+    "i","you","he","she","we","they","am","are","is",
+    "have","has","do","does","can","could","would","will"
 }
 
 # ---------------------------
@@ -102,13 +91,23 @@ ENGLISH_OVERRIDE = {
 def detect_lang_safe(text: str) -> str:
     try:
         norm_text = normalize_text(text)
+        words = [clean_word(w) for w in norm_text.split()]
 
-        for word in norm_text.split():
+        # Static overrides
+        for word in words:
             if word in SPANISH_OVERRIDE:
                 return "es"
             if word in ENGLISH_OVERRIDE:
                 return "en"
 
+        # Learned overrides
+        for word in words:
+            if word in DYNAMIC_OVERRIDES["es"]:
+                return "es"
+            if word in DYNAMIC_OVERRIDES["en"]:
+                return "en"
+
+        # FastText fallback
         ft_model = get_ft_model()
         labels, probs = ft_model.predict(norm_text, k=1)
         label = labels[0].replace("__label__", "")
@@ -125,14 +124,37 @@ def detect_lang_safe(text: str) -> str:
         return "en"
 
 # ---------------------------
-# Translation Safety
+# Learning New Words
 # ---------------------------
-def force_language(text, target_lang):
+def learn_override(word: str, lang: str):
+    word = clean_word(word)
+    if not word:
+        return
+    if word not in DYNAMIC_OVERRIDES[lang]:
+        DYNAMIC_OVERRIDES[lang].append(word)
+        save_overrides(DYNAMIC_OVERRIDES)
+        logger.info(f"Learned new {lang} override word: {word}")
+
+# ---------------------------
+# Translation Safety + Learning
+# ---------------------------
+def force_language(text, target_lang, original_text=None):
     try:
         detected = detect_lang_safe(text)
         if detected == target_lang:
             return text
-        return GoogleTranslator(source='auto', target=target_lang).translate(text)
+
+        translated = GoogleTranslator(source='auto', target='es').translate(text)
+
+        # Learn from user message if mismatch happened
+        if original_text:
+            words = [clean_word(w) for w in normalize_text(original_text).split()]
+            for w in words:
+                if len(w) <= 4:
+                    learn_override(w, target_lang)
+
+        return translated
+
     except Exception as e:
         logger.error(f"Translation error: {e}")
         return text
@@ -190,7 +212,7 @@ User message:
         data = response.json()
         reply = data["choices"][0]["message"]["content"]
 
-        return force_language(reply, user_lang)
+        return force_language(reply, user_lang, original_text=message)
 
     except Exception as e:
         logger.error(f"Character query failed: {e}")

@@ -12,6 +12,17 @@ export default function ChatPage({ character, setCharacter }) {
   const GAP = 40;
   const MIN_DISTANCE = 170;
 
+  // 💬 Eva phrases (softer emotional tone)
+  const evaPhrases = [
+    "La oscuridad que nos rodea es profunda, pero nuestra amor es más fuerte, más intenso, y más apasionado.",
+    "When I'm with you, everything feels quieter… like the world fades away.",
+    "Mi corazón late con fuerza cuando estoy cerca de él, como si supiera que mi vida está a punto de cambiar para siempre.",
+    "I’m not perfect, but what I feel is real.",
+    "Me duele amarte, pero no puedo evitarlo, eres adictivo, eres mi veneno y mi antídoto",
+    "Maybe we’re both still figuring things out… together."
+  ];
+
+  // 💬 Gideon phrases
   const gideonPhrases = [
     "My entire existence has been defined by my need for you, Eva. You're the reason I breathe, the reason I live.",
     "Eres la única persona que ha logrado hacer que me sienta vivo...",
@@ -20,6 +31,14 @@ export default function ChatPage({ character, setCharacter }) {
     "I want you, Eva. I want all of you. My love for you is a force of nature.",
     "Give yourself to me, Eva. Let go of your fears and doubts."
   ];
+
+  // 🧠 Phrase map per character (scalable)
+  const characterPhrases = {
+    Gideon: gideonPhrases,
+    Eva: evaPhrases
+  };
+
+  const phrases = characterPhrases[character] || [];
 
   // Observe chat box size & movement
   useEffect(() => {
@@ -106,18 +125,18 @@ export default function ChatPage({ character, setCharacter }) {
 
   // Initial placement
   useEffect(() => {
-    if (character !== "Gideon" || !chatBounds) return;
+    if (!phrases.length || !chatBounds) return;
 
     const newPositions = [];
-    gideonPhrases.forEach(() => {
+    phrases.forEach(() => {
       newPositions.push(getRandomPosition(newPositions));
     });
     setPhrasePositions(newPositions);
   }, [character, chatBounds]);
 
-  // Floating movement
+  // Floating movement (reposition every 7s)
   useEffect(() => {
-    if (character !== "Gideon" || !chatBounds) return;
+    if (!phrases.length || !chatBounds) return;
 
     const interval = setInterval(() => {
       setPhrasePositions(prev => {
@@ -136,7 +155,10 @@ export default function ChatPage({ character, setCharacter }) {
         <h2 className="text-2xl font-title text-primary">
           Chateando con {character}
         </h2>
-        <button onClick={() => setCharacter(null)} className="text-gray-600 hover:text-primary">
+        <button
+          onClick={() => setCharacter(null)}
+          className="text-gray-600 hover:text-primary"
+        >
           Volver
         </button>
       </div>
@@ -145,14 +167,14 @@ export default function ChatPage({ character, setCharacter }) {
         <ChatWindow character={character} />
       </div>
 
-      {character === "Gideon" &&
+      {phrases.length > 0 &&
         phrasePositions.map((pos, i) => (
           <div
             key={i}
             className={styles.floatingPhrase}
             style={{ top: pos.top + "px", left: pos.left + "px" }}
           >
-            <div className={styles.phraseBubble}>{gideonPhrases[i]}</div>
+            <div className={styles.phraseBubble}>{phrases[i]}</div>
           </div>
         ))}
     </div>
