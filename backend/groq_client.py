@@ -1,9 +1,10 @@
 import logging
 import requests
-from google.cloud import translate_v2 as translate  # Google Cloud Translate API
+from deep_translator import GoogleTranslator
 from .config import GROQ_API_KEY, MODEL_NAME
 from backend.search import get_relevant_chunks
 import unicodedata
+import fasttext
 import os
 import json
 import re
@@ -16,6 +17,11 @@ logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
 )
 logger = logging.getLogger("lang_pipeline")
+
+# ---------------------------
+# FastText Model Path
+# ---------------------------
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "fasttext/lid.176.ftz")
 
 # ---------------------------
 # Dynamic Override Storage
@@ -35,19 +41,16 @@ def save_overrides(data):
 DYNAMIC_OVERRIDES = load_overrides()
 
 # ---------------------------
-# Google Cloud Translate client
+# Lazy model loader
 # ---------------------------
-translate_client = translate.Client()
-
-def detect_language_google_cloud(text: str) -> str:
-    """Detect the language of a text using Google Cloud Translate API."""
-    try:
-        result = translate_client.detect_language(text)
-        lang = result['language']
-        return lang if lang in ['es', 'en'] else 'en'
-    except Exception as e:
-        logger.error(f"Google Cloud detection failed: {e}")
-        return 'en'
+def get_ft_model():
+    if not hasattr(get_ft_model, "model"):
+        logger.info("Loading FastText model...")
+        if not os.path.exists(MODEL_PATH):
+            raise FileNotFoundError(f"FastText model not found at {MODEL_PATH}")
+        get_ft_model.model = fasttext.load_model(MODEL_PATH)
+        logger.info("FastText model loaded successfully")
+    return get_ft_model.model
 
 # ---------------------------
 # Normalize text
@@ -73,9 +76,19 @@ SPANISH_OVERRIDE = {
     "porque","por","para","si","no","bien","mal","muy","estoy","eres","es",
     "somos","son","hay","tengo","quiero","puedo","de","el","la","lo","un",
     "una","yo","tu","el","ella","nosotros","ellos","usted","ustedes",
-    "mas","sí","más"
+    "mas","sí","más","también","ahora","ayer","mañana","hoy","nunca","siempre",
+    "alguno","ninguno","algo","nada","todos","todas","ellos","ellas",
+    "vamos","vamosa","vienes","vengo","creo","parece","entiendo","entiendes",
+    "amigo","amiga","chico","chica","familia","gente","persona","personas",
+    "grande","pequeño","pequeña","bueno","buena","malo","mala","nuevo","nueva",
+    "viejo","vieja","mejor","peor","antes","despues","dentro","fuera",
+    "arriba","abajo","cerca","lejos","siéntate","levántate","hablar","hablo",
+    "hablas","comer","beber","leer","escribir","ver","mirar","escuchar",
+    "oír","sentir","pensar","saber","conocer","entender","ayuda","ayudar",
+    "trabajo","dinero","escuela","clase","profesor","profesora","amigos",
+    "familia","casa","hogar","vida","amor","feliz","triste","enojado","enojada",
+    "contento","contenta","cansado","cansada"
 }
-
 ENGLISH_OVERRIDE = {
     "hi","hello","hey","thanks","ok","yes","no","please",
     "i","you","he","she","we","they","am","are","is",
@@ -93,8 +106,22 @@ PHRASE_OVERRIDE = {
     "ok": "en",
     "lol": "en",
     "brb": "en",
+    "xd": "es",
+    "jaja": "es",
+    "jeje": "es",
+    "q onda": "es",
+    "q haces": "es",
+    "q pasa": "es",
+    "tqm": "es",
+    "bno": "es",
+    "saludos": "es",
+    "nos vemos": "es",
+    "hasta luego": "es",
+    "x favor": "es",
+    "pls": "en",
+    "thx": "en",
+    "np": "en"
 }
-
 # ---------------------------
 # Learning New Words
 # ---------------------------
@@ -106,6 +133,19 @@ def learn_override(word: str, lang: str):
         DYNAMIC_OVERRIDES[lang].append(word)
         save_overrides(DYNAMIC_OVERRIDES)
         logger.info(f"Learned new {lang} override word: {word}")
+
+# ---------------------------
+# Google Translate fallback for unknown short phrases
+# ---------------------------
+def detect_with_google(text: str) -> str:
+    try:
+        translated = GoogleTranslator(source='auto', target='es').translate(text)
+        if translated.lower() != text.lower():
+            return "es"
+        return "en"
+    except Exception as e:
+        logger.error(f"Google Translate detection failed: {e}")
+        return "en"
 
 # ---------------------------
 # Language Detection
@@ -136,8 +176,23 @@ def detect_lang_safe(text: str) -> str:
             if word in DYNAMIC_OVERRIDES["en"]:
                 return "en"
 
-        # 4️⃣ Use Google Cloud detection for short/unknown phrases
-        return detect_language_google_cloud(text)
+        # 4️⃣ FastText fallback (for longer texts)
+        if len(words) >= 3:
+            ft_model = get_ft_model()
+            labels, probs = ft_model.predict(norm_text, k=1)
+            label = labels[0].replace("__label__", "")
+            if label in ["es", "en"]:
+                return label
+
+        # 5️⃣ Short phrase: use Google Translate
+        if len(words) <= 2:
+            return detect_with_google(norm_text)
+
+        # 6️⃣ Accent heuristic
+        if any(c in "áéíóúñü" for c in norm_text):
+            return "es"
+
+        return "en"
 
     except Exception as e:
         logger.error(f"Language detection error: {e}")
@@ -235,4 +290,4 @@ User message:
 # Local test
 # ---------------------------
 if __name__ == "__main__":
-    print(query_character("Gideon", "estas ahi?"))
+    print(query_character("Gideon", "q tal?"))
