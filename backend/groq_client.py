@@ -22,7 +22,9 @@ logger = logging.getLogger("lang_pipeline")
 # You need to download the model once from:
 # https://fasttext.cc/docs/en/language-identification.html
 # Example: lid.176.ftz
-MODEL_PATH = "C:\\IA_character_GPT\\backend\\fasttext\\lid.176.ftz"
+
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "fasttext/lid.176.ftz")
+
 
 ft_model = fasttext.load_model(MODEL_PATH)
 print(os.path.exists(r"C:\\IA_character_GPT\\backend\\fasttext\\lid.176.ftz"))
