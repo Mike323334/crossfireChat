@@ -1,6 +1,6 @@
 import logging
 import requests
-import pycld3
+from langdetect import detect, DetectorFactory, LangDetectException
 from .config import GROQ_API_KEY, MODEL_NAME
 from backend.search import get_relevant_chunks
 import unicodedata
@@ -17,6 +17,14 @@ logging.basicConfig(
 )
 logger = logging.getLogger("lang_pipeline")
 
+# ---------------------------
+# Deterministic langdetect
+# ---------------------------
+DetectorFactory.seed = 0
+
+# ---------------------------
+# Paths
+# ---------------------------
 BASE_DIR = os.path.dirname(__file__)
 OVERRIDE_PATH = os.path.join(BASE_DIR, "language_overrides.json")
 
@@ -91,43 +99,46 @@ def learn_override(word: str, lang: str):
 # Language Detection
 # ---------------------------
 def detect_lang_safe(text: str) -> str:
-    try:
-        norm_text = normalize_text(text)
-        words = [clean_word(w) for w in norm_text.split() if w]
+    norm_text = normalize_text(text)
+    words = [clean_word(w) for w in norm_text.split() if w]
 
-        # 1️⃣ Phrase overrides
-        for phrase, lang in sorted(PHRASE_OVERRIDE.items(), key=lambda x: -len(x[0])):
-            if phrase in norm_text:
-                learn_override(phrase, lang)
-                return lang
+    # 1️⃣ Phrase overrides
+    for phrase, lang in sorted(PHRASE_OVERRIDE.items(), key=lambda x: -len(x[0])):
+        if phrase in norm_text:
+            learn_override(phrase, lang)
+            return lang
 
-        # 2️⃣ Static word overrides
-        if sum(w in SPANISH_OVERRIDE for w in words) >= 1:
-            return "es"
-        if sum(w in ENGLISH_OVERRIDE for w in words) >= 1:
-            return "en"
-
-        # 3️⃣ Learned overrides
-        for w in words:
-            if w in DYNAMIC_OVERRIDES["es"]:
-                return "es"
-            if w in DYNAMIC_OVERRIDES["en"]:
-                return "en"
-
-        # 4️⃣ Accent heuristic
-        if any(c in "áéíóúñü" for c in text.lower()):
-            return "es"
-
-        # 5️⃣ 🔥 CLD3 main detector
-        result = pycld3.get_language(text)
-        if result and result.language in ["es", "en"]:
-            if result.probability > 0.65:
-                return result.language
-
+    # 2️⃣ Static word overrides
+    if sum(w in SPANISH_OVERRIDE for w in words) >= 1:
+        return "es"
+    if sum(w in ENGLISH_OVERRIDE for w in words) >= 1:
         return "en"
 
-    except Exception as e:
-        logger.error(f"Language detection error: {e}")
+    # 3️⃣ Learned overrides
+    for w in words:
+        if w in DYNAMIC_OVERRIDES["es"]:
+            return "es"
+        if w in DYNAMIC_OVERRIDES["en"]:
+            return "en"
+
+    # 4️⃣ Accent heuristic
+    if any(c in "áéíóúñü" for c in text.lower()):
+        return "es"
+
+    # 5️⃣ Regex heuristic for questions cortas
+    question_match = re.match(r".*[\wáéíóúñü]+\?$", text.strip())
+    if question_match:
+        if any(w in SPANISH_OVERRIDE for w in words):
+            return "es"
+
+    # 6️⃣ langdetect fallback
+    try:
+        lang = detect(text)
+        if lang.startswith("es"):
+            return "es"
+        else:
+            return "en"
+    except LangDetectException:
         return "en"
 
 # ---------------------------
@@ -170,7 +181,14 @@ Stay fully in character. Never say you are an AI.
         )
 
         response.raise_for_status()
-        return response.json()["choices"][0]["message"]["content"]
+        reply = response.json()["choices"][0]["message"]["content"]
+
+        # Learn short words dynamically
+        for w in clean_word(message).split():
+            if len(w) <= 4:
+                learn_override(w, user_lang)
+
+        return reply
 
     except Exception as e:
         logger.error(f"Character query failed: {e}")
@@ -181,3 +199,4 @@ Stay fully in character. Never say you are an AI.
 # ---------------------------
 if __name__ == "__main__":
     print(query_character("Gideon", "estas ahi?"))
+    print(query_character("Gideon", "q tal?"))
