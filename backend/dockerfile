@@ -20,7 +20,7 @@ RUN pip install -r requirements.txt
 
 # Copy your backend code
 COPY backend/ ./backend/
-COPY fasttext/ ./backend/fasttext/
+COPY backend/fasttext/ ./backend/fasttext/
 
 # Expose port (Render default)
 EXPOSE 10000
