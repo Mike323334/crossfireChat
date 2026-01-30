@@ -26,8 +26,16 @@ logger = logging.getLogger("lang_pipeline")
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "fasttext/lid.176.ftz")
 
 
-ft_model = fasttext.load_model(MODEL_PATH)
-print(os.path.exists(r"C:\\IA_character_GPT\\backend\\fasttext\\lid.176.ftz"))
+# Lazy model loader (prevents Render crash)
+def get_ft_model():
+    if not hasattr(get_ft_model, "model"):
+        logger.info("Loading FastText model...")
+        if not os.path.exists(MODEL_PATH):
+            raise FileNotFoundError(f"FastText model not found at {MODEL_PATH}")
+        get_ft_model.model = fasttext.load_model(MODEL_PATH)
+        logger.info("FastText model loaded successfully")
+    return get_ft_model.model
+
 
 # ---------------------------
 # Normalize text
