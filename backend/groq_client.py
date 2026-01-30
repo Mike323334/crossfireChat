@@ -51,7 +51,26 @@ SPANISH_OVERRIDE = {
     "hola", "adios", "gracias", "que", "como", "cuando", "donde",
     "quien", "cual", "porque", "por", "para", "si", "no", "bien",
     "mal", "muy", "estoy", "eres", "es", "somos", "son", "hay",
-    "tengo", "quiero", "puedo", "de", "el", "la", "lo", "un", "una"
+    "tengo", "quiero", "puedo", "de", "el", "la", "lo", "un", "una",
+        "yo", "tú", "él", "ella", "nosotros", "nosotras", "vosotros", "vosotras", "ellos", "ellas", "usted", "ustedes",
+
+    # Common short verbs
+    "estoy", "estas", "esta", "es", "soy", "eres", "somos", "son", "tengo", "tiene", "tenemos", "quiero", "puedo",
+
+    # Question words
+    "qué", "como", "cuándo", "dónde", "quién", "cuál", "por qué", "para qué",
+
+    # Short prepositions / connectors
+    "a", "de", "en", "con", "sin", "por", "para", "sobre", "entre",
+
+    # Common short adverbs / adjectives
+    "sí", "no", "bien", "mal", "muy", "ya", "más", "menos", "todo", "nada",
+
+    # Greetings / polite words
+    "hola", "adiós", "gracias", "buenos", "buenas", "tarde", "noche", "día",
+
+    # Misc short words
+    "lo", "la", "el", "un", "una", "y", "o", "pero", "porque"
 }
 
 ENGLISH_OVERRIDE = {
