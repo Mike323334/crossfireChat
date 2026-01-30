@@ -5,3 +5,5 @@ requests==2.31.0
 deep-translator
 fasttext
 uvicorn>=0.23.0
+pycld3==0.22
+protobuf>=4.25.0

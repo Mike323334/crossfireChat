@@ -1,10 +1,9 @@
 import logging
 import requests
-from deep_translator import GoogleTranslator
+import pycld3
 from .config import GROQ_API_KEY, MODEL_NAME
 from backend.search import get_relevant_chunks
 import unicodedata
-import fasttext
 import os
 import json
 import re
@@ -18,16 +17,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger("lang_pipeline")
 
-# ---------------------------
-# FastText Model Path
-# ---------------------------
-MODEL_PATH = os.path.join(os.path.dirname(__file__), "fasttext/lid.176.ftz")
+BASE_DIR = os.path.dirname(__file__)
+OVERRIDE_PATH = os.path.join(BASE_DIR, "language_overrides.json")
 
 # ---------------------------
-# Dynamic Override Storage
+# Override Storage
 # ---------------------------
-OVERRIDE_PATH = os.path.join(os.path.dirname(__file__), "language_overrides.json")
-
 def load_overrides():
     if not os.path.exists(OVERRIDE_PATH):
         return {"es": [], "en": []}
@@ -41,19 +36,7 @@ def save_overrides(data):
 DYNAMIC_OVERRIDES = load_overrides()
 
 # ---------------------------
-# Lazy model loader
-# ---------------------------
-def get_ft_model():
-    if not hasattr(get_ft_model, "model"):
-        logger.info("Loading FastText model...")
-        if not os.path.exists(MODEL_PATH):
-            raise FileNotFoundError(f"FastText model not found at {MODEL_PATH}")
-        get_ft_model.model = fasttext.load_model(MODEL_PATH)
-        logger.info("FastText model loaded successfully")
-    return get_ft_model.model
-
-# ---------------------------
-# Normalize text
+# Text Normalization
 # ---------------------------
 def normalize_text(text: str) -> str:
     text = text.strip().lower()
@@ -61,12 +44,10 @@ def normalize_text(text: str) -> str:
         c for c in unicodedata.normalize('NFD', text)
         if unicodedata.category(c) != 'Mn'
     )
-    text = re.sub(r"[^\w\s]", "", text)  # remove punctuation
-    return text
+    return re.sub(r"[^\w\s]", "", text)
 
 def clean_word(word: str) -> str:
-    word = normalize_text(word)
-    return re.sub(r"[^\w]", "", word)
+    return re.sub(r"[^\w]", "", normalize_text(word))
 
 # ---------------------------
 # Static Overrides
@@ -75,19 +56,11 @@ SPANISH_OVERRIDE = {
     "hola","adios","gracias","que","como","cuando","donde","quien","cual",
     "porque","por","para","si","no","bien","mal","muy","estoy","eres","es",
     "somos","son","hay","tengo","quiero","puedo","de","el","la","lo","un",
-    "una","yo","tu","el","ella","nosotros","ellos","usted","ustedes",
-    "mas","sí","más","tambien","ahora","ayer","manana","hoy","nunca","siempre",
-    "alguno","ninguno","algo","nada","todos","todas","ellos","ellas",
-    "vamos","vamosa","vienes","vengo","creo","parece","entiendo","entiendes",
-    "amigo","amiga","chico","chica","familia","gente","persona","personas",
-    "grande","pequeno","pequena","bueno","buena","malo","mala","nuevo","nueva",
-    "viejo","vieja","mejor","peor","antes","despues","dentro","fuera",
-    "arriba","abajo","cerca","lejos","sientate","levantate","hablar","hablo",
-    "hablas","comer","beber","leer","escribir","ver","mirar","escuchar",
-    "oir","sentir","pensar","saber","conocer","entender","ayuda","ayudar",
-    "trabajo","dinero","escuela","clase","profesor","profesora","amigos",
-    "familia","casa","hogar","vida","amor","feliz","triste","enojado","enojada",
-    "contento","contenta","cansado","cansada","estas","ahi","todo","bien"
+    "una","yo","tu","ella","nosotros","ellos","usted","ustedes",
+    "mas","tambien","ahora","ayer","manana","hoy","nunca","siempre",
+    "vamos","vienes","vengo","creo","parece","entiendo",
+    "amigo","amiga","familia","casa","vida","amor","feliz","triste",
+    "estas","ahi","todo","bien"
 }
 
 ENGLISH_OVERRIDE = {
@@ -96,58 +69,23 @@ ENGLISH_OVERRIDE = {
     "have","has","do","does","can","could","would","will"
 }
 
-# ---------------------------
-# Short chat phrases
-# ---------------------------
 PHRASE_OVERRIDE = {
-    "q tal": "es",
-    "xq": "es",
-    "tmb": "es",
-    "bn": "es",
-    "ok": "en",
-    "lol": "en",
-    "brb": "en",
-    "xd": "es",
-    "jaja": "es",
-    "jeje": "es",
-    "q onda": "es",
-    "q haces": "es",
-    "q pasa": "es",
-    "tqm": "es",
-    "bno": "es",
-    "saludos": "es",
-    "nos vemos": "es",
-    "hasta luego": "es",
-    "x favor": "es",
-    "pls": "en",
-    "thx": "en",
-    "np": "en"
+    "q tal": "es","xq": "es","tmb": "es","bn": "es",
+    "lol": "en","brb": "en","xd": "es","jaja": "es","jeje": "es",
+    "q onda": "es","q haces": "es","q pasa": "es","tqm": "es",
+    "bno": "es","saludos": "es","nos vemos": "es","hasta luego": "es",
+    "x favor": "es","pls": "en","thx": "en","np": "en"
 }
 
 # ---------------------------
-# Learning New Words
+# Learning Overrides
 # ---------------------------
 def learn_override(word: str, lang: str):
     word = clean_word(word)
-    if not word:
-        return
-    if word not in DYNAMIC_OVERRIDES[lang]:
+    if word and word not in DYNAMIC_OVERRIDES[lang]:
         DYNAMIC_OVERRIDES[lang].append(word)
         save_overrides(DYNAMIC_OVERRIDES)
-        logger.info(f"Learned new {lang} override word: {word}")
-
-# ---------------------------
-# Google Translate fallback
-# ---------------------------
-def detect_with_google(text: str) -> str:
-    try:
-        translated = GoogleTranslator(source='auto', target='es').translate(text)
-        if translated.lower() != text.lower():
-            return "es"
-        return "en"
-    except Exception as e:
-        logger.error(f"Google Translate detection failed: {e}")
-        return "en"
+        logger.info(f"Learned new {lang} word: {word}")
 
 # ---------------------------
 # Language Detection
@@ -157,75 +95,40 @@ def detect_lang_safe(text: str) -> str:
         norm_text = normalize_text(text)
         words = [clean_word(w) for w in norm_text.split() if w]
 
-        # 1️⃣ Phrase-level overrides
+        # 1️⃣ Phrase overrides
         for phrase, lang in sorted(PHRASE_OVERRIDE.items(), key=lambda x: -len(x[0])):
             if phrase in norm_text:
                 learn_override(phrase, lang)
                 return lang
 
         # 2️⃣ Static word overrides
-        spanish_hits = sum(1 for w in words if w in SPANISH_OVERRIDE)
-        english_hits = sum(1 for w in words if w in ENGLISH_OVERRIDE)
-        if spanish_hits >= 2:
+        if sum(w in SPANISH_OVERRIDE for w in words) >= 1:
             return "es"
-        if english_hits >= 2:
+        if sum(w in ENGLISH_OVERRIDE for w in words) >= 1:
             return "en"
 
         # 3️⃣ Learned overrides
-        for word in words:
-            if word in DYNAMIC_OVERRIDES["es"]:
+        for w in words:
+            if w in DYNAMIC_OVERRIDES["es"]:
                 return "es"
-            if word in DYNAMIC_OVERRIDES["en"]:
+            if w in DYNAMIC_OVERRIDES["en"]:
                 return "en"
 
-        # 4️⃣ FastText fallback (longer texts)
-        if len(words) >= 3:
-            ft_model = get_ft_model()
-            labels, probs = ft_model.predict(norm_text, k=1)
-            label = labels[0].replace("__label__", "")
-            if label in ["es", "en"]:
-                return label
-
-        # 5️⃣ Short phrases: Google Translate
-        if len(words) <= 2:
-            return detect_with_google(norm_text)
-
-        # 6️⃣ Accents heuristic
-        if any(c in "áéíóúñü" for c in norm_text):
+        # 4️⃣ Accent heuristic
+        if any(c in "áéíóúñü" for c in text.lower()):
             return "es"
+
+        # 5️⃣ 🔥 CLD3 main detector
+        result = pycld3.get_language(text)
+        if result and result.language in ["es", "en"]:
+            if result.probability > 0.65:
+                return result.language
 
         return "en"
 
     except Exception as e:
         logger.error(f"Language detection error: {e}")
         return "en"
-
-# ---------------------------
-# Translation + Learning
-# ---------------------------
-def force_language(text, target_lang, original_text=None):
-    try:
-        detected = detect_lang_safe(text)
-        if detected == target_lang:
-            words = [clean_word(w) for w in normalize_text(text).split()]
-            for w in words:
-                if len(w) <= 4:
-                    learn_override(w, target_lang)
-            return text
-
-        translated = GoogleTranslator(source='auto', target=target_lang).translate(text)
-
-        if original_text:
-            words = [clean_word(w) for w in normalize_text(original_text).split()]
-            for w in words:
-                if len(w) <= 4:
-                    learn_override(w, target_lang)
-
-        return translated
-
-    except Exception as e:
-        logger.error(f"Translation error: {e}")
-        return text
 
 # ---------------------------
 # Character Query
@@ -243,21 +146,11 @@ def query_character(character, message, history=None):
 
         system_prompt = f"""
 You are {character} from the Crossfire novel series.
-
-IMPORTANT LANGUAGE RULE:
-{lang_instruction}
-
-Stay fully in character with emotional depth and intensity.
-Never say you are an AI.
+IMPORTANT LANGUAGE RULE: {lang_instruction}
+Stay fully in character. Never say you are an AI.
 """
 
-        user_prompt = f"""
-Book context:
-{context}
-
-User message:
-{message}
-"""
+        user_prompt = f"Context:\n{context}\n\nUser message:\n{message}"
 
         response = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
@@ -277,10 +170,7 @@ User message:
         )
 
         response.raise_for_status()
-        data = response.json()
-        reply = data["choices"][0]["message"]["content"]
-
-        return force_language(reply, user_lang, original_text=message)
+        return response.json()["choices"][0]["message"]["content"]
 
     except Exception as e:
         logger.error(f"Character query failed: {e}")

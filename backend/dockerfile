@@ -1,30 +1,39 @@
-# Use official Python image
+# Use official lightweight Python image
 FROM python:3.12-slim
 
-# Install build tools for fasttext
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    git \
-    wget \
-    && rm -rf /var/lib/apt/lists/*
+# Prevent Python from buffering stdout/stderr
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 # Set working directory
 WORKDIR /app
 
-# Copy requirements
-COPY backend/requirements.txt ./
+# Install system dependencies required for fasttext + pycld3
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    protobuf-compiler \
+    libprotobuf-dev \
+    git \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Upgrade pip first
+RUN pip install --upgrade pip
+
+# Copy only requirements first (better layer caching)
+COPY backend/requirements.txt ./requirements.txt
 
 # Install Python dependencies
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade setuptools wheel
 
-# Copy your backend code
+
+# Copy backend code
 COPY backend/ ./backend/
 COPY backend/fasttext/ ./backend/fasttext/
 
-# Expose port (Render default)
+# Render provides the port dynamically
 EXPOSE 10000
 
-# Run the app (adjust if using uvicorn/Flask/etc.)
-CMD ["uvicorn", "backend.app:app", "--host", "0.0.0.0", "--port", "10000"]
-
+# Start FastAPI with Render's dynamic port
+CMD ["sh", "-c", "uvicorn backend.app:app --host 0.0.0.0 --port $PORT"]
