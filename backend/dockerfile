@@ -1,5 +1,5 @@
-# Use official lightweight Python image
-FROM python:3.12-slim
+# Use stable Python (3.11 is safer for native builds like pycld3)
+FROM python:3.11-slim
 
 # Prevent Python from buffering stdout/stderr
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -8,32 +8,28 @@ ENV PYTHONUNBUFFERED=1
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies required for fasttext + pycld3
+# Install system dependencies required for pycld3
 RUN apt-get update && apt-get install -y \
     build-essential \
     protobuf-compiler \
     libprotobuf-dev \
-    git \
-    wget \
+    libprotoc-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip first
-RUN pip install --upgrade pip
-
-# Copy only requirements first (better layer caching)
+# Copy requirements first for better Docker caching
 COPY backend/requirements.txt ./requirements.txt
+
+# Upgrade packaging tools
+RUN pip install --upgrade pip setuptools wheel
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir --upgrade setuptools wheel
 
-
-# Copy backend code
+# Copy backend source code
 COPY backend/ ./backend/
-COPY backend/fasttext/ ./backend/fasttext/
 
-# Render provides the port dynamically
+# Render provides port dynamically
 EXPOSE 10000
 
-# Start FastAPI with Render's dynamic port
-CMD ["sh", "-c", "uvicorn backend.app:app --host 0.0.0.0 --port $PORT"]
+# Start FastAPI using Render's PORT env variable
+CMD ["sh", "-c", "uvicorn backend.app:app --host 0.0.0.0 --port ${PORT:-10000}"]
