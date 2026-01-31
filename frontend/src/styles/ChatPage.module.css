@@ -6,6 +6,9 @@
   animation: none !important;
   transition: none !important;
   transform: none !important;
+  translate: none !important;
+  left: var(--bubble-left, 0) !important;
+  top: var(--bubble-top, 0) !important;
 }
 
 .phraseBubble {
@@ -79,11 +82,12 @@
     rgba(255, 255, 255, 0.2),
     transparent
   );
-  transition: left 0.5s;
+  transition: none !important;
+  animation: none !important;
 }
 
 .phraseBubble:hover::before {
-  left: 100%;
+  left: -100% !important; /* Keep it hidden, no movement */
 }
 
 .phraseBubble:hover {

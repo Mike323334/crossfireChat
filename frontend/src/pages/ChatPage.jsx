@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import ChatWindow from "../components/ChatWindow.jsx";
 import styles from "../styles/ChatPage.module.css";
 
@@ -31,15 +31,17 @@ export default function ChatPage({ character, setCharacter }) {
   const phrases = characterPhrases[character] || [];
 
   const [bubbles, setBubbles] = useState([]);
-  const hasPositionedRef = useRef(false);
+  const positionedKeyRef = useRef(null);
 
-  // Position bubbles statically ONLY ONCE at the sides of the chat window
+  // Position bubbles ONLY ONCE per character - never update again
   useEffect(() => {
-    if (!phrases.length || hasPositionedRef.current) return;
-    if (!chatRef.current || !titleRef.current) return;
-
-    const positionBubbles = () => {
-      if (hasPositionedRef.current) return;
+    const currentKey = character;
+    if (positionedKeyRef.current === currentKey) return; // Already positioned for this character
+    if (!phrases.length) return;
+    
+    const timer = setTimeout(() => {
+      if (!chatRef.current || !titleRef.current) return;
+      if (positionedKeyRef.current === currentKey) return; // Double check
       
       const chatRect = chatRef.current.getBoundingClientRect();
       const titleRect = titleRef.current.getBoundingClientRect();
@@ -103,16 +105,16 @@ export default function ChatPage({ character, setCharacter }) {
       });
 
       setBubbles(newBubbles);
-      hasPositionedRef.current = true; // Mark as positioned - NEVER update again
-    };
+      positionedKeyRef.current = currentKey; // Mark as positioned for this character
+    }, 400);
 
-    // Wait for elements to be ready, then position once
-    const timer = setTimeout(() => {
-      positionBubbles();
-    }, 300);
-    
-    return () => clearTimeout(timer);
-  }, [phrases]);
+    return () => {
+      clearTimeout(timer);
+      if (positionedKeyRef.current !== currentKey) {
+        positionedKeyRef.current = null; // Reset only if character changed
+      }
+    };
+  }, [phrases, character]);
 
 
   const isOverlappingChat = (bubble, chatBounds) => {
@@ -169,16 +171,32 @@ export default function ChatPage({ character, setCharacter }) {
           key={`bubble-${i}-${b.left}-${b.top}`}
           className={styles.floatingPhrase}
           style={{ 
+            '--bubble-left': `${b.left}px`,
+            '--bubble-top': `${b.top}px`,
             position: 'fixed',
             left: `${b.left}px`,
             top: `${b.top}px`,
             transform: 'none',
             animation: 'none',
             transition: 'none',
-            willChange: 'auto'
+            willChange: 'auto',
+            translate: 'none',
+            margin: 0,
+            padding: 0
           }}
         >
-          <div className={styles.phraseBubble} style={{ animation: 'none', transform: 'none', transition: 'none' }}>{phrases[i]}</div>
+          <div 
+            className={styles.phraseBubble} 
+            style={{ 
+              animation: 'none', 
+              transform: 'none', 
+              transition: 'none',
+              translate: 'none',
+              margin: 0
+            }}
+          >
+            {phrases[i]}
+          </div>
         </div>
       ))}
     </div>
