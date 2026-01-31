@@ -22,4 +22,4 @@ COPY backend/ ./backend/
 EXPOSE 10000
 
 # Start FastAPI using Render's dynamic PORT environment variable
-CMD ["uvicorn", "backend.app:app", "--host", "0.0.0.0", "--port", "${PORT:-10000}"]
+CMD ["sh", "-c", "uvicorn backend.app:app --host 0.0.0.0 --port ${PORT:-10000}"]
