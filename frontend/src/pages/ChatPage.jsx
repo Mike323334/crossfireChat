@@ -66,10 +66,10 @@ export default function ChatPage({ character, setCharacter }) {
         box = {
           left: GAP + Math.random() * (windowW - PHRASE_W - GAP * 2),
           top: GAP + Math.random() * (windowH - PHRASE_H - GAP * 2),
-          dx: (Math.random() - 0.5) * 0.15, // Slow, smooth movement
-          dy: (Math.random() - 0.5) * 0.15,
-          vx: (Math.random() - 0.5) * 0.15, // Slow velocity for gentle floating
-          vy: (Math.random() - 0.5) * 0.15
+          dx: (Math.random() - 0.5) * 0.12, // Very slow, gentle movement
+          dy: (Math.random() - 0.5) * 0.12,
+          vx: (Math.random() - 0.5) * 0.12, // Very slow velocity for gentle floating
+          vy: (Math.random() - 0.5) * 0.12
         };
         tries++;
       } while (
@@ -197,23 +197,26 @@ export default function ChatPage({ character, setCharacter }) {
 
   return (
     <div className="w-full h-screen relative flex flex-col overflow-hidden bg-gradient-to-br from-gray-900 via-red-900 to-black">
+      {/* Animated background overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-red-950/30 via-transparent to-black/40 pointer-events-none"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(179,58,58,0.1),transparent_50%)] pointer-events-none"></div>
 
       {/* TITLE - Centered */}
-      <div className="relative p-4 md:p-6 flex items-center justify-center border-b border-white/10 backdrop-blur-sm bg-black/20">
-        <h2 className="text-2xl md:text-3xl font-title text-white text-center drop-shadow-lg">
-          Chateando con <span className="text-primary font-bold">{character}</span>
+      <div className="relative p-5 md:p-7 flex items-center justify-center border-b border-white/20 backdrop-blur-md bg-gradient-to-r from-black/40 via-black/30 to-black/40 shadow-2xl">
+        <h2 className="text-3xl md:text-4xl lg:text-5xl font-title text-white text-center drop-shadow-2xl">
+          Chateando con <span className="text-primary font-bold bg-gradient-to-r from-primary to-red-500 bg-clip-text text-transparent">{character}</span>
         </h2>
         <button 
           onClick={() => setCharacter(null)} 
-          className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg backdrop-blur-sm transition-all duration-300 hover:scale-105 border border-white/20"
+          className="absolute right-5 md:right-8 top-1/2 -translate-y-1/2 bg-gradient-to-r from-white/15 to-white/10 hover:from-white/25 hover:to-white/15 text-white px-5 py-3 rounded-xl backdrop-blur-md transition-all duration-300 hover:scale-110 border border-white/30 shadow-lg hover:shadow-xl font-semibold"
         >
           ← Volver
         </button>
       </div>
 
       {/* CENTER CHAT */}
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div ref={chatRef} className="relative z-20 w-full max-w-2xl">
+      <div className="flex-1 flex items-center justify-center p-4 md:p-6 relative z-10">
+        <div ref={chatRef} className="relative z-20 w-full max-w-3xl">
           <ChatWindow character={character} />
         </div>
       </div>
