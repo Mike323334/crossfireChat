@@ -66,10 +66,10 @@ export default function ChatPage({ character, setCharacter }) {
         box = {
           left: GAP + Math.random() * (windowW - PHRASE_W - GAP * 2),
           top: GAP + Math.random() * (windowH - PHRASE_H - GAP * 2),
-          dx: (Math.random() - 0.5) * 0.05, // Extremely slow, gentle movement
-          dy: (Math.random() - 0.5) * 0.05,
-          vx: (Math.random() - 0.5) * 0.05, // Extremely slow velocity for very gentle floating
-          vy: (Math.random() - 0.5) * 0.05
+          dx: (Math.random() - 0.5) * 0.015, // Very slow, gentle movement
+          dy: (Math.random() - 0.5) * 0.015,
+          vx: (Math.random() - 0.5) * 0.015, // Very slow velocity for gentle floating
+          vy: (Math.random() - 0.5) * 0.015
         };
         tries++;
       } while (
@@ -92,9 +92,9 @@ export default function ChatPage({ character, setCharacter }) {
         const updated = prev.map((b) => {
           let { top, left, dx, dy, vx = dx, vy = dy } = b;
           
-          // Update position with velocity
-          left += vx * deltaTime;
-          top += vy * deltaTime;
+          // Update position with velocity - reduce speed further
+          left += vx * deltaTime * 0.5; // Slow down movement by 50%
+          top += vy * deltaTime * 0.5;
 
           const maxX = window.innerWidth - PHRASE_W - GAP;
           const maxY = window.innerHeight - PHRASE_H - GAP;
@@ -102,18 +102,18 @@ export default function ChatPage({ character, setCharacter }) {
           // Natural bounce off edges with damping
           if (left < GAP) {
             left = GAP;
-            vx = Math.abs(vx) * 0.85; // More damping for smoother, slower bounce
+            vx = Math.abs(vx) * 0.75; // More damping for smoother, slower bounce
           } else if (left > maxX) {
             left = maxX;
-            vx = -Math.abs(vx) * 0.85;
+            vx = -Math.abs(vx) * 0.75;
           }
 
           if (top < GAP) {
             top = GAP;
-            vy = Math.abs(vy) * 0.85;
+            vy = Math.abs(vy) * 0.75;
           } else if (top > maxY) {
             top = maxY;
-            vy = -Math.abs(vy) * 0.85;
+            vy = -Math.abs(vy) * 0.75;
           }
 
           return { top, left, dx, dy, vx, vy };
@@ -155,7 +155,7 @@ export default function ChatPage({ character, setCharacter }) {
               const dotProduct = relativeVx * nx + relativeVy * ny;
 
               if (dotProduct < 0) {
-                const bounce = 0.6; // Lower bounce coefficient for slower, smoother collisions
+                const bounce = 0.4; // Much lower bounce coefficient for very slow, smooth collisions
                 updated[i].vx += nx * dotProduct * bounce;
                 updated[i].vy += ny * dotProduct * bounce;
                 updated[j].vx -= nx * dotProduct * bounce;
