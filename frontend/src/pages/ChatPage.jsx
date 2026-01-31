@@ -51,130 +51,86 @@ export default function ChatPage({ character, setCharacter }) {
     };
   }, []);
 
-  // Initialize bubbles with random positions and velocities
+  // Position bubbles statically around the chat window
   useEffect(() => {
-    if (!phrases.length) return;
-    const newBubbles = [];
-    const windowW = window.innerWidth;
-    const windowH = window.innerHeight;
+    if (!phrases.length || !chatBounds) return;
 
-    // Generate bubbles with proper spacing
-    phrases.forEach(() => {
-      let box;
-      let tries = 0;
-      do {
-        box = {
-          left: GAP + Math.random() * (windowW - PHRASE_W - GAP * 2),
-          top: GAP + Math.random() * (windowH - PHRASE_H - GAP * 2),
-          dx: (Math.random() - 0.5) * 0.015, // Very slow, gentle movement
-          dy: (Math.random() - 0.5) * 0.015,
-          vx: (Math.random() - 0.5) * 0.015, // Very slow velocity for gentle floating
-          vy: (Math.random() - 0.5) * 0.015
-        };
-        tries++;
-      } while (
-        newBubbles.some(b => isTooClose(b, box)) && 
-        tries < 500
-      );
-      newBubbles.push(box);
-    });
+    const updateBubblePositions = () => {
+      const windowW = window.innerWidth;
+      const windowH = window.innerHeight;
+      const headerHeight = 100; // Approximate header height
+      
+      // Chat bounds with padding to avoid overlap
+      const chatLeft = chatBounds.left - PHRASE_W - 40;
+      const chatRight = chatBounds.right + 40;
+      const chatTop = chatBounds.top - PHRASE_H - 40;
+      const chatBottom = chatBounds.bottom + 40;
 
-    setBubbles(newBubbles);
+      const newBubbles = [];
+      const positions = [];
 
-    let animFrame;
-    let lastTime = performance.now();
+      // Generate positions around the chat window
+      phrases.forEach((_, index) => {
+        let position;
+        let tries = 0;
+        const maxTries = 200;
 
-    const animate = (currentTime) => {
-      const deltaTime = Math.min((currentTime - lastTime) / 16, 2); // Cap delta for stability
-      lastTime = currentTime;
+        do {
+          // Distribute bubbles around the chat in different zones
+          const zone = index % 4; // 4 zones: top, right, bottom, left
+          let left, top;
 
-      setBubbles(prev => {
-        const updated = prev.map((b) => {
-          let { top, left, dx, dy, vx = dx, vy = dy } = b;
-          
-          // Update position with velocity - reduce speed further
-          left += vx * deltaTime * 0.5; // Slow down movement by 50%
-          top += vy * deltaTime * 0.5;
-
-          const maxX = window.innerWidth - PHRASE_W - GAP;
-          const maxY = window.innerHeight - PHRASE_H - GAP;
-
-          // Natural bounce off edges with damping
-          if (left < GAP) {
-            left = GAP;
-            vx = Math.abs(vx) * 0.75; // More damping for smoother, slower bounce
-          } else if (left > maxX) {
-            left = maxX;
-            vx = -Math.abs(vx) * 0.75;
+          switch (zone) {
+            case 0: // Top area
+              left = GAP + Math.random() * (windowW - PHRASE_W - GAP * 2);
+              top = headerHeight + GAP + Math.random() * Math.max(0, chatTop - headerHeight - GAP - PHRASE_H);
+              break;
+            case 1: // Right area
+              left = chatRight + Math.random() * Math.max(0, windowW - chatRight - PHRASE_W - GAP);
+              top = headerHeight + GAP + Math.random() * (windowH - headerHeight - PHRASE_H - GAP);
+              break;
+            case 2: // Bottom area
+              left = GAP + Math.random() * (windowW - PHRASE_W - GAP * 2);
+              top = chatBottom + Math.random() * Math.max(0, windowH - chatBottom - PHRASE_H - GAP);
+              break;
+            case 3: // Left area
+              left = GAP + Math.random() * Math.max(0, chatLeft - GAP - PHRASE_W);
+              top = headerHeight + GAP + Math.random() * (windowH - headerHeight - PHRASE_H - GAP);
+              break;
           }
 
-          if (top < GAP) {
-            top = GAP;
-            vy = Math.abs(vy) * 0.75;
-          } else if (top > maxY) {
-            top = maxY;
-            vy = -Math.abs(vy) * 0.75;
-          }
+          // Ensure within bounds
+          left = Math.max(GAP, Math.min(left, windowW - PHRASE_W - GAP));
+          top = Math.max(headerHeight + GAP, Math.min(top, windowH - PHRASE_H - GAP));
 
-          return { top, left, dx, dy, vx, vy };
-        });
+          position = { left, top };
 
-        // Improved collision detection and resolution
-        for (let i = 0; i < updated.length; i++) {
-          for (let j = i + 1; j < updated.length; j++) {
-            if (isOverlapping(updated[i], updated[j])) {
-              // Calculate centers
-              const center1 = {
-                x: updated[i].left + PHRASE_W / 2,
-                y: updated[i].top + PHRASE_H / 2
-              };
-              const center2 = {
-                x: updated[j].left + PHRASE_W / 2,
-                y: updated[j].top + PHRASE_H / 2
-              };
+          tries++;
+        } while (
+          (isOverlappingChat(position, chatBounds) || 
+           positions.some(p => isTooClose(p, position))) && 
+          tries < maxTries
+        );
 
-              // Calculate distance and direction
-              const dx = center2.x - center1.x;
-              const dy = center2.y - center1.y;
-              const distance = Math.sqrt(dx * dx + dy * dy) || 1;
-
-              // Normalize direction
-              const nx = dx / distance;
-              const ny = dy / distance;
-
-              // Separate bubbles
-              const separation = (PHRASE_W + 20 - distance) / 2;
-              updated[i].left -= nx * separation;
-              updated[i].top -= ny * separation;
-              updated[j].left += nx * separation;
-              updated[j].top += ny * separation;
-
-              // Bounce with natural physics
-              const relativeVx = updated[j].vx - updated[i].vx;
-              const relativeVy = updated[j].vy - updated[i].vy;
-              const dotProduct = relativeVx * nx + relativeVy * ny;
-
-              if (dotProduct < 0) {
-                const bounce = 0.4; // Much lower bounce coefficient for very slow, smooth collisions
-                updated[i].vx += nx * dotProduct * bounce;
-                updated[i].vy += ny * dotProduct * bounce;
-                updated[j].vx -= nx * dotProduct * bounce;
-                updated[j].vy -= ny * dotProduct * bounce;
-              }
-            }
-          }
+        if (tries < maxTries) {
+          positions.push(position);
+          newBubbles.push(position);
         }
-
-        return updated;
       });
 
-      animFrame = requestAnimationFrame(animate);
+      setBubbles(newBubbles);
     };
 
-    animate(performance.now());
-
-    return () => cancelAnimationFrame(animFrame);
-  }, [phrases]);
+    updateBubblePositions();
+    
+    // Update on window resize
+    const handleResize = () => {
+      setTimeout(updateBubblePositions, 100);
+    };
+    
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [phrases, chatBounds]);
 
   const isTooClose = (a, b) => {
     const center1 = { x: a.left + PHRASE_W / 2, y: a.top + PHRASE_H / 2 };
@@ -185,13 +141,14 @@ export default function ChatPage({ character, setCharacter }) {
     return distance < MIN_DISTANCE;
   };
 
-  const isOverlapping = (a, b) => {
-    const buffer = 5;
+  const isOverlappingChat = (bubble, chatBounds) => {
+    if (!chatBounds) return false;
+    const buffer = 30; // Extra padding around chat
     return !(
-      a.left + PHRASE_W + buffer < b.left ||
-      a.left > b.left + PHRASE_W + buffer ||
-      a.top + PHRASE_H + buffer < b.top ||
-      a.top > b.top + PHRASE_H + buffer
+      bubble.left + PHRASE_W + buffer < chatBounds.left ||
+      bubble.left > chatBounds.right + buffer ||
+      bubble.top + PHRASE_H + buffer < chatBounds.top ||
+      bubble.top > chatBounds.bottom + buffer
     );
   };
 
@@ -221,15 +178,16 @@ export default function ChatPage({ character, setCharacter }) {
         </div>
       </div>
 
-      {/* FLOATING BUBBLES */}
+      {/* STATIC BUBBLES AROUND CHAT */}
       {bubbles.map((b, i) => (
         <div
           key={i}
           className={styles.floatingPhrase}
           style={{ 
-            transform: `translate(${b.left}px, ${b.top}px)`,
-            top: 0,
-            left: 0
+            position: 'fixed',
+            left: `${b.left}px`,
+            top: `${b.top}px`,
+            transform: 'none'
           }}
         >
           <div className={styles.phraseBubble}>{phrases[i]}</div>
