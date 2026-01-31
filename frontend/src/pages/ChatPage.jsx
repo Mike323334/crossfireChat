@@ -77,38 +77,31 @@ export default function ChatPage({ character, setCharacter }) {
       const newBubbles = [];
       const positions = [];
 
-      // Generate static positions around the chat window - allow overlapping between bubbles
+      // Generate static positions ONLY at the sides (left and right) of the chat window
       phrases.forEach((_, index) => {
         let position;
         let tries = 0;
         const maxTries = 100;
 
         do {
-          // Distribute bubbles evenly around the chat
-          const zone = index % 4; // 4 zones: top, right, bottom, left
+          // Distribute bubbles between left and right sides of chat
+          const isLeft = index % 2 === 0; // Alternate between left and right
           let left, top;
 
-          switch (zone) {
-            case 0: // Top area - above chat but below title
-              left = GAP + Math.random() * (windowW - PHRASE_W - GAP * 2);
-              const topAreaHeight = Math.max(50, chatTop - titleBottom - GAP);
-              top = titleBottom + GAP + Math.random() * topAreaHeight;
-              break;
-            case 1: // Right area - to the right of chat
-              const rightAreaWidth = Math.max(50, windowW - chatRight - GAP);
-              left = chatRight + Math.random() * rightAreaWidth;
-              top = titleBottom + GAP + Math.random() * (windowH - titleBottom - PHRASE_H - GAP);
-              break;
-            case 2: // Bottom area - below chat
-              left = GAP + Math.random() * (windowW - PHRASE_W - GAP * 2);
-              const bottomAreaHeight = Math.max(50, windowH - chatBottom - GAP);
-              top = chatBottom + Math.random() * bottomAreaHeight;
-              break;
-            case 3: // Left area - to the left of chat
-              const leftAreaWidth = Math.max(50, chatLeft - GAP - PHRASE_W);
-              left = GAP + Math.random() * leftAreaWidth;
-              top = titleBottom + GAP + Math.random() * (windowH - titleBottom - PHRASE_H - GAP);
-              break;
+          if (isLeft) {
+            // Left side of chat
+            const leftAreaWidth = Math.max(50, chatLeft - GAP - PHRASE_W);
+            left = GAP + Math.random() * leftAreaWidth;
+            // Position vertically aligned with chat (from title bottom to window bottom)
+            const availableHeight = windowH - titleBottom - GAP - PHRASE_H;
+            top = titleBottom + GAP + Math.random() * Math.max(50, availableHeight);
+          } else {
+            // Right side of chat
+            const rightAreaWidth = Math.max(50, windowW - chatRight - GAP);
+            left = chatRight + Math.random() * rightAreaWidth;
+            // Position vertically aligned with chat (from title bottom to window bottom)
+            const availableHeight = windowH - titleBottom - GAP - PHRASE_H;
+            top = titleBottom + GAP + Math.random() * Math.max(50, availableHeight);
           }
 
           // Ensure within bounds
