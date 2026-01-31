@@ -72,23 +72,24 @@ export default function ChatPage({ character, setCharacter }) {
     return zones.filter(z => z.w > PHRASE_W && z.h > PHRASE_H);
   };
 
-  // Rectangle collision
+  // Collision detection between rectangles
   const isOverlapping = (a, b) => {
+    const buffer = 15; // extra spacing
     return !(
-      a.left + PHRASE_W + GAP < b.left ||
-      a.left > b.left + PHRASE_W + GAP ||
-      a.top + PHRASE_H + GAP < b.top ||
-      a.top > b.top + PHRASE_H + GAP
+      a.left + PHRASE_W + buffer < b.left ||
+      a.left > b.left + PHRASE_W + buffer ||
+      a.top + PHRASE_H + buffer < b.top ||
+      a.top > b.top + PHRASE_H + buffer
     );
   };
 
-  // Random position
+  // Random position without overlap
   const getRandomPosition = (existing) => {
     const zones = getSafeZones();
     if (!zones.length) return { top: 50, left: 50 };
 
     let tries = 0;
-    while (tries < 120) {
+    while (tries < 200) {
       const zone = zones[Math.floor(Math.random() * zones.length)];
       const left = zone.x + Math.random() * (zone.w - PHRASE_W);
       const top = zone.y + Math.random() * (zone.h - PHRASE_H);
@@ -97,6 +98,7 @@ export default function ChatPage({ character, setCharacter }) {
       if (!existing.some(p => isOverlapping(p, box))) return box;
       tries++;
     }
+
     return { top: zones[0].y, left: zones[0].x };
   };
 
@@ -108,7 +110,7 @@ export default function ChatPage({ character, setCharacter }) {
     setPhrasePositions(newPositions);
   }, [character, chatBounds]);
 
-  // Slowly drift bubbles
+  // Smooth drifting with no overlap
   useEffect(() => {
     if (!phrases.length || !chatBounds) return;
     const interval = setInterval(() => {
@@ -141,7 +143,7 @@ export default function ChatPage({ character, setCharacter }) {
         </div>
       </div>
 
-      {/* FLOATING PHRASES */}
+      {/* FLOATING BUBBLES */}
       {phrases.map((text, i) => (
         <div
           key={i}
