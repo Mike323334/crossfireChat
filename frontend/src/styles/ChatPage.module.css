@@ -2,7 +2,7 @@
   position: fixed;
   pointer-events: none;
   z-index: 5;
-  transition: top 0.2s linear, left 0.2s linear;
+  transition: top 0.15s linear, left 0.15s linear;
 }
 
 .phraseBubble {
@@ -11,12 +11,12 @@
   padding: 16px;
   border-radius: 18px;
 
-  /* Glass transparent effect */
+  /* Glass effect */
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 
-  /* Soft black shadow */
+  /* Shadow */
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.35);
 
   color: white;

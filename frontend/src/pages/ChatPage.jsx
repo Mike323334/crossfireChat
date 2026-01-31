@@ -50,27 +50,25 @@ export default function ChatPage({ character, setCharacter }) {
     };
   }, []);
 
-  // Get safe zones around chat
   const getSafeZones = () => {
     if (!chatBounds) return [];
     const isDesktop = window.innerWidth >= 768;
 
     const zones = [
-      { x: GAP, y: GAP, w: window.innerWidth - GAP * 2, h: chatBounds.top - GAP * 2 }, // TOP
-      { x: GAP, y: chatBounds.bottom + GAP, w: window.innerWidth - GAP * 2, h: window.innerHeight - chatBounds.bottom - GAP * 2 } // BOTTOM
+      { x: GAP, y: GAP, w: window.innerWidth - GAP * 2, h: chatBounds.top - GAP * 2 },
+      { x: GAP, y: chatBounds.bottom + GAP, w: window.innerWidth - GAP * 2, h: window.innerHeight - chatBounds.bottom - GAP * 2 }
     ];
 
     if (isDesktop) {
       zones.push(
-        { x: GAP, y: chatBounds.top, w: chatBounds.left - GAP * 2, h: chatBounds.height }, // LEFT
-        { x: chatBounds.right + GAP, y: chatBounds.top, w: window.innerWidth - chatBounds.right - GAP * 2, h: chatBounds.height } // RIGHT
+        { x: GAP, y: chatBounds.top, w: chatBounds.left - GAP * 2, h: chatBounds.height },
+        { x: chatBounds.right + GAP, y: chatBounds.top, w: window.innerWidth - chatBounds.right - GAP * 2, h: chatBounds.height }
       );
     }
 
     return zones.filter(z => z.w > PHRASE_W && z.h > PHRASE_H);
   };
 
-  // Check collision between bubbles
   const isOverlapping = (a, b) => {
     const buffer = 10;
     return !(
@@ -81,12 +79,16 @@ export default function ChatPage({ character, setCharacter }) {
     );
   };
 
-  // Initialize bubbles with random positions and velocities
+  // Initialize bubbles safely
   useEffect(() => {
     if (!phrases.length || !chatBounds) return;
 
     const zones = getSafeZones();
-    const newBubbles = phrases.map(() => {
+    if (!zones.length) return;
+
+    const newBubbles = [];
+
+    phrases.forEach(() => {
       let box;
       let tries = 0;
       do {
@@ -98,8 +100,8 @@ export default function ChatPage({ character, setCharacter }) {
           dy: (Math.random() - 0.5) * 0.6
         };
         tries++;
-      } while (newBubbles?.some(b => isOverlapping(b, box)) && tries < 200);
-      return box;
+      } while (newBubbles.some(b => isOverlapping(b, box)) && tries < 200);
+      newBubbles.push(box);
     });
 
     setBubbles(newBubbles);
@@ -130,7 +132,9 @@ export default function ChatPage({ character, setCharacter }) {
     };
 
     animate();
+
     return () => cancelAnimationFrame(animFrame);
+
   }, [phrases, chatBounds]);
 
   return (
@@ -154,15 +158,16 @@ export default function ChatPage({ character, setCharacter }) {
       </div>
 
       {/* FLOATING BUBBLES */}
-      {bubbles.map((b, i) => (
-        <div
-          key={i}
-          className={styles.floatingPhrase}
-          style={{ top: b.top, left: b.left }}
-        >
-          <div className={styles.phraseBubble}>{phrases[i]}</div>
-        </div>
-      ))}
+      {bubbles.length > 0 &&
+        bubbles.map((b, i) => (
+          <div
+            key={i}
+            className={styles.floatingPhrase}
+            style={{ top: b.top, left: b.left }}
+          >
+            <div className={styles.phraseBubble}>{phrases[i]}</div>
+          </div>
+        ))}
     </div>
   );
 }
