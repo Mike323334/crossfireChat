@@ -131,17 +131,8 @@ export default function ChatPage({ character, setCharacter }) {
       updateBubblePositions();
     }, 150);
     
-    // Update on window resize
-    const handleResize = () => {
-      clearTimeout(timer);
-      setTimeout(updateBubblePositions, 200);
-    };
-    
-    window.addEventListener("resize", handleResize);
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener("resize", handleResize);
-    };
+    // Don't update on resize - keep bubbles static
+    // Only position once when component mounts
   }, [phrases, chatBounds, titleBounds]);
 
 
@@ -193,7 +184,7 @@ export default function ChatPage({ character, setCharacter }) {
         </div>
       </div>
 
-      {/* STATIC BUBBLES AROUND CHAT */}
+      {/* STATIC BUBBLES AT SIDES OF CHAT */}
       {bubbles.map((b, i) => (
         <div
           key={i}
@@ -202,13 +193,13 @@ export default function ChatPage({ character, setCharacter }) {
             position: 'fixed',
             left: `${b.left}px`,
             top: `${b.top}px`,
-            transform: 'none',
+            transform: 'none !important',
             animation: 'none !important',
             transition: 'none !important',
-            willChange: 'auto'
+            willChange: 'auto !important'
           }}
         >
-          <div className={styles.phraseBubble}>{phrases[i]}</div>
+          <div className={styles.phraseBubble} style={{ animation: 'none !important', transform: 'none !important' }}>{phrases[i]}</div>
         </div>
       ))}
     </div>

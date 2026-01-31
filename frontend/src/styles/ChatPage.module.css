@@ -49,10 +49,12 @@
     0 2px 8px rgba(0, 0, 0, 0.5),
     0 0 10px rgba(179, 58, 58, 0.3);
   
-  /* Blink animation */
+  /* Completely static - no animations */
   position: relative;
   overflow: hidden;
-  animation: blink 4s ease-in-out infinite;
+  animation: none !important;
+  transform: none !important;
+  transition: none !important;
 }
 
 @keyframes blink {
@@ -85,7 +87,7 @@
 }
 
 .phraseBubble:hover {
-  transform: scale(1.05);
+  /* No transform on hover - keep completely static */
   box-shadow: 
     0 15px 50px rgba(0, 0, 0, 0.6),
     0 0 40px rgba(179, 58, 58, 0.5),
