@@ -36,9 +36,9 @@ export default function ChatWindow({ character }) {
   };
 
   return (
-    <div className="flex flex-col border rounded-lg p-4 bg-white shadow h-80 md:h-96">
+    <div className="flex flex-col border rounded-lg p-2 sm:p-4 bg-white shadow h-screen sm:h-80 md:h-96">
       {/* MESSAGES */}
-      <div className="flex-1 overflow-y-auto mb-4 space-y-2 min-h-0">
+      <div className="flex-1 overflow-y-auto mb-2 sm:mb-4 space-y-2 min-h-0">
         {messages.map((m, i) => {
           const isUser = m.sender === "usuario";
 
@@ -48,7 +48,7 @@ export default function ChatWindow({ character }) {
               className={`w-full flex ${isUser ? "justify-end" : "justify-start"}`}
             >
               <div
-                className={`p-3 rounded-lg break-words max-w-xs md:max-w-md lg:max-w-lg ${
+                className={`p-2 sm:p-3 rounded-lg break-words text-sm sm:text-base max-w-xs md:max-w-md lg:max-w-lg ${
                   isUser
                     ? "bg-primary text-white"
                     : "bg-accent text-gray-800"
@@ -64,14 +64,14 @@ export default function ChatWindow({ character }) {
       {/* INPUT AREA */}
       <div className="flex flex-col sm:flex-row gap-2">
         <input
-          className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+          className="flex-1 p-2 sm:p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm sm:text-base"
           value={input}
           onChange={e => setInput(e.target.value)}
           placeholder="Escribe tu mensaje..."
           onKeyDown={e => e.key === "Enter" && handleSend()}
         />
         <button
-          className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-accent transition whitespace-nowrap"
+          className="bg-primary text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-accent transition whitespace-nowrap text-sm sm:text-base"
           onClick={handleSend}
         >
           Enviar

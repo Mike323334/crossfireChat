@@ -150,20 +150,20 @@ export default function ChatPage({ character, setCharacter }) {
   }, [character, chatBounds]);
 
   return (
-    <div className="w-full max-w-4xl p-4 md:p-6 relative min-h-screen">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl md:text-2xl font-title text-primary">
+    <div className="w-full max-w-4xl mx-auto p-0 sm:p-4 md:p-6 relative h-screen sm:min-h-screen">
+      <div className="flex justify-between items-center mb-0 sm:mb-4 p-2 sm:p-0">
+        <h2 className="text-xl sm:text-xl md:text-2xl font-title text-primary">
           Chateando con {character}
         </h2>
         <button
           onClick={() => setCharacter(null)}
-          className="text-gray-600 hover:text-primary text-sm md:text-base"
+          className="text-base sm:text-base"
         >
           Volver
         </button>
       </div>
 
-      <div ref={chatRef} className="relative z-20">
+      <div ref={chatRef} className="relative z-20 h-full sm:h-auto">
         <ChatWindow character={character} />
       </div>
 
