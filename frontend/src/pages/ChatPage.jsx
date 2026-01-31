@@ -201,11 +201,11 @@ export default function ChatPage({ character, setCharacter }) {
           <div 
             className={styles.phraseBubble} 
             style={{ 
+              animation: 'none', 
               transform: 'none', 
               transition: 'none',
               translate: 'none',
               margin: 0
-              /* Allow blink animation from CSS */
             }}
           >
             {phrases[i]}

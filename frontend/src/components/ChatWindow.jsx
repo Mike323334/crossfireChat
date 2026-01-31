@@ -63,11 +63,12 @@ export default function ChatWindow({ character }) {
 
       <div className="flex gap-3 pt-4 border-t-2 border-white/30 relative z-10">
         <input
-          className="flex-1 p-4 md:p-5 border-2 border-white/40 rounded-2xl bg-gradient-to-r from-white/25 to-white/15 backdrop-blur-md text-white placeholder-white/70 focus:outline-none focus:ring-4 focus:ring-primary/50 focus:border-primary/50 transition-all shadow-lg text-base md:text-lg font-medium"
+          className="flex-1 p-4 md:p-5 border-2 border-white/40 rounded-2xl bg-gradient-to-r from-white/25 to-white/15 backdrop-blur-md text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-4 focus:ring-primary/50 focus:border-primary/50 transition-all shadow-lg text-base md:text-lg font-medium"
           value={input}
           onChange={e => setInput(e.target.value)}
           placeholder="Escribe un mensaje..."
           onKeyDown={e => e.key === "Enter" && handleSend()}
+          style={{ color: '#1f2937' }}
         />
         <button
           className="bg-gradient-to-r from-primary via-red-600 to-red-700 text-white px-8 md:px-10 py-4 md:py-5 rounded-2xl font-bold text-base md:text-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 border-2 border-white/30 shadow-xl hover:from-red-600 hover:to-primary"
