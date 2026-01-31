@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { sendMessage } from "../api/chatApi.js";
 
 export default function ChatWindow({ character }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const messagesEndRef = useRef(null);
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -35,6 +36,10 @@ export default function ChatWindow({ character }) {
     }
   };
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
   return (
     <div className="flex flex-col border rounded-lg p-2 sm:p-4 bg-white shadow h-screen sm:h-80 md:h-96">
       {/* MESSAGES */}
@@ -59,6 +64,7 @@ export default function ChatWindow({ character }) {
             </div>
           );
         })}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* INPUT AREA */}
