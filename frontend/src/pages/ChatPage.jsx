@@ -8,6 +8,7 @@ export default function ChatPage({ character, setCharacter }) {
   const PHRASE_W = 260;
   const PHRASE_H = 110;
   const GAP = 20;
+  const MIN_DISTANCE = PHRASE_W + 30; // Minimum distance between bubbles to avoid overlapping
 
   const evaPhrases = [
     
@@ -57,12 +58,13 @@ export default function ChatPage({ character, setCharacter }) {
       const titleBottom = titleRect.bottom + 30;
 
       const newBubbles = [];
+      const positions = [];
 
       // Generate static positions ONLY at the sides (left and right) of the chat window
       phrases.forEach((_, index) => {
         let position;
         let tries = 0;
-        const maxTries = 100;
+        const maxTries = 300;
 
         do {
           // Distribute bubbles between left and right sides of chat
@@ -94,12 +96,14 @@ export default function ChatPage({ character, setCharacter }) {
           tries++;
         } while (
           (isOverlappingChat(position, chatRect) || 
-           isOverlappingTitle(position, titleRect)) && 
+           isOverlappingTitle(position, titleRect) ||
+           positions.some(p => isTooClose(p, position))) && 
           tries < maxTries
         );
 
-        // Always add position, even if it overlaps with other bubbles (that's allowed)
+        // Only add position if it doesn't overlap with other bubbles
         if (tries < maxTries) {
+          positions.push(position);
           newBubbles.push(position);
         }
       });
@@ -137,6 +141,15 @@ export default function ChatPage({ character, setCharacter }) {
       bubble.top + PHRASE_H + buffer < titleBounds.top ||
       bubble.top > titleBounds.bottom + buffer
     );
+  };
+
+  const isTooClose = (a, b) => {
+    const center1 = { x: a.left + PHRASE_W / 2, y: a.top + PHRASE_H / 2 };
+    const center2 = { x: b.left + PHRASE_W / 2, y: b.top + PHRASE_H / 2 };
+    const dx = center2.x - center1.x;
+    const dy = center2.y - center1.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    return distance < MIN_DISTANCE;
   };
 
   return (
@@ -188,11 +201,11 @@ export default function ChatPage({ character, setCharacter }) {
           <div 
             className={styles.phraseBubble} 
             style={{ 
-              animation: 'none', 
               transform: 'none', 
               transition: 'none',
               translate: 'none',
               margin: 0
+              /* Allow blink animation from CSS */
             }}
           >
             {phrases[i]}
