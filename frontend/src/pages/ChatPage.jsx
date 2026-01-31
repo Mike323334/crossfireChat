@@ -13,21 +13,21 @@ export default function ChatPage({ character, setCharacter }) {
   const MIN_DISTANCE = PHRASE_W + 30; // Minimum distance between bubbles
 
   const evaPhrases = [
-    "La oscuridad que nos rodea es profunda, pero nuestro amor es más fuerte.",
+    
     "When I'm with you, everything feels quieter…",
     "Mi corazón late con fuerza cuando estoy cerca de él.",
     "I'm not perfect, but what I feel is real.",
     "Me duele amarte, pero no puedo evitarlo.",
-    "Maybe we're both still figuring things out… together."
+    
   ];
 
   const gideonPhrases = [
-    "I'd rather not think about the past.",
+  
     "Mi vida con Gideon es un torbellino de pasión y peligro.",
     "What's on your mind?",
     "Eres la única que ha podido calmar la tormenta dentro de mí.",
     "You're the reason I breathe.",
-    "Eres la única persona que me hace sentir vivo."
+    
   ];
 
   const characterPhrases = { Gideon: gideonPhrases, Eva: evaPhrases };
