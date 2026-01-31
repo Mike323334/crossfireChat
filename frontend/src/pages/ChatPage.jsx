@@ -20,7 +20,8 @@ export default function ChatPage({ character, setCharacter }) {
   ];
 
   const gideonPhrases = [
-  
+    "Eva, eres la única mujer que ha podido ver más allá de mi armadura, la única que ha logrado hacer que me sienta vivo.",
+    "You're mine, Eva. You've always been mine." ,
     "Mi vida con Gideon es un torbellino de pasión y peligro.",
     "What's on your mind?",
     "Eres la única que ha podido calmar la tormenta dentro de mí.",
@@ -201,11 +202,11 @@ export default function ChatPage({ character, setCharacter }) {
           <div 
             className={styles.phraseBubble} 
             style={{ 
-              animation: 'none', 
               transform: 'none', 
               transition: 'none',
               translate: 'none',
               margin: 0
+              /* Animation is handled by CSS - don't override it */
             }}
           >
             {phrases[i]}
