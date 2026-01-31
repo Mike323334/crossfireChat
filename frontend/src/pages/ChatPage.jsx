@@ -7,15 +7,16 @@ export default function ChatPage({ character, setCharacter }) {
   const [chatBounds, setChatBounds] = useState(null);
   const PHRASE_W = 260;
   const PHRASE_H = 110;
-  const GAP = 40;
+  const GAP = 20;
+  const MIN_DISTANCE = PHRASE_W + 30; // Minimum distance between bubbles
 
   const evaPhrases = [
     "La oscuridad que nos rodea es profunda, pero nuestro amor es más fuerte.",
     "When I'm with you, everything feels quieter…",
     "Mi corazón late con fuerza cuando estoy cerca de él.",
-    "I’m not perfect, but what I feel is real.",
+    "I'm not perfect, but what I feel is real.",
     "Me duele amarte, pero no puedo evitarlo.",
-    "Maybe we’re both still figuring things out… together."
+    "Maybe we're both still figuring things out… together."
   ];
 
   const gideonPhrases = [
@@ -57,6 +58,7 @@ export default function ChatPage({ character, setCharacter }) {
     const windowW = window.innerWidth;
     const windowH = window.innerHeight;
 
+    // Generate bubbles with proper spacing
     phrases.forEach(() => {
       let box;
       let tries = 0;
@@ -64,41 +66,101 @@ export default function ChatPage({ character, setCharacter }) {
         box = {
           left: GAP + Math.random() * (windowW - PHRASE_W - GAP * 2),
           top: GAP + Math.random() * (windowH - PHRASE_H - GAP * 2),
-          dx: (Math.random() - 0.5) * 0.3, // slow movement
-          dy: (Math.random() - 0.5) * 0.3
+          dx: (Math.random() - 0.5) * 0.5, // Smooth movement speed
+          dy: (Math.random() - 0.5) * 0.5,
+          vx: (Math.random() - 0.5) * 0.5, // Velocity for smooth acceleration
+          vy: (Math.random() - 0.5) * 0.5
         };
         tries++;
-      } while (newBubbles.some(b => isOverlapping(b, box)) && tries < 200);
+      } while (
+        newBubbles.some(b => isTooClose(b, box)) && 
+        tries < 500
+      );
       newBubbles.push(box);
     });
 
     setBubbles(newBubbles);
 
     let animFrame;
+    let lastTime = performance.now();
 
-    const animate = () => {
+    const animate = (currentTime) => {
+      const deltaTime = Math.min((currentTime - lastTime) / 16, 2); // Cap delta for stability
+      lastTime = currentTime;
+
       setBubbles(prev => {
-        const updated = prev.map((b, i) => {
-          let { top, left, dx, dy } = b;
-          top += dy;
-          left += dx;
+        const updated = prev.map((b) => {
+          let { top, left, dx, dy, vx = dx, vy = dy } = b;
+          
+          // Update position with velocity
+          left += vx * deltaTime;
+          top += vy * deltaTime;
 
-          // Bounce off window edges
-          if (left < GAP) dx = Math.abs(dx);
-          if (left + PHRASE_W > window.innerWidth - GAP) dx = -Math.abs(dx);
-          if (top < GAP) dy = Math.abs(dy);
-          if (top + PHRASE_H > window.innerHeight - GAP) dy = -Math.abs(dy);
+          const maxX = window.innerWidth - PHRASE_W - GAP;
+          const maxY = window.innerHeight - PHRASE_H - GAP;
 
-          return { top, left, dx, dy };
+          // Natural bounce off edges with damping
+          if (left < GAP) {
+            left = GAP;
+            vx = Math.abs(vx) * 0.9; // Damping for natural bounce
+          } else if (left > maxX) {
+            left = maxX;
+            vx = -Math.abs(vx) * 0.9;
+          }
+
+          if (top < GAP) {
+            top = GAP;
+            vy = Math.abs(vy) * 0.9;
+          } else if (top > maxY) {
+            top = maxY;
+            vy = -Math.abs(vy) * 0.9;
+          }
+
+          return { top, left, dx, dy, vx, vy };
         });
 
-        // Check collisions between bubbles
+        // Improved collision detection and resolution
         for (let i = 0; i < updated.length; i++) {
           for (let j = i + 1; j < updated.length; j++) {
             if (isOverlapping(updated[i], updated[j])) {
-              // Simple bounce: invert directions
-              [updated[i].dx, updated[j].dx] = [-updated[i].dx, -updated[j].dx];
-              [updated[i].dy, updated[j].dy] = [-updated[i].dy, -updated[j].dy];
+              // Calculate centers
+              const center1 = {
+                x: updated[i].left + PHRASE_W / 2,
+                y: updated[i].top + PHRASE_H / 2
+              };
+              const center2 = {
+                x: updated[j].left + PHRASE_W / 2,
+                y: updated[j].top + PHRASE_H / 2
+              };
+
+              // Calculate distance and direction
+              const dx = center2.x - center1.x;
+              const dy = center2.y - center1.y;
+              const distance = Math.sqrt(dx * dx + dy * dy) || 1;
+
+              // Normalize direction
+              const nx = dx / distance;
+              const ny = dy / distance;
+
+              // Separate bubbles
+              const separation = (PHRASE_W + 20 - distance) / 2;
+              updated[i].left -= nx * separation;
+              updated[i].top -= ny * separation;
+              updated[j].left += nx * separation;
+              updated[j].top += ny * separation;
+
+              // Bounce with natural physics
+              const relativeVx = updated[j].vx - updated[i].vx;
+              const relativeVy = updated[j].vy - updated[i].vy;
+              const dotProduct = relativeVx * nx + relativeVy * ny;
+
+              if (dotProduct < 0) {
+                const bounce = 0.8; // Bounce coefficient
+                updated[i].vx += nx * dotProduct * bounce;
+                updated[i].vy += ny * dotProduct * bounce;
+                updated[j].vx -= nx * dotProduct * bounce;
+                updated[j].vy -= ny * dotProduct * bounce;
+              }
             }
           }
         }
@@ -109,13 +171,22 @@ export default function ChatPage({ character, setCharacter }) {
       animFrame = requestAnimationFrame(animate);
     };
 
-    animate();
+    animate(performance.now());
 
     return () => cancelAnimationFrame(animFrame);
   }, [phrases]);
 
+  const isTooClose = (a, b) => {
+    const center1 = { x: a.left + PHRASE_W / 2, y: a.top + PHRASE_H / 2 };
+    const center2 = { x: b.left + PHRASE_W / 2, y: b.top + PHRASE_H / 2 };
+    const dx = center2.x - center1.x;
+    const dy = center2.y - center1.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    return distance < MIN_DISTANCE;
+  };
+
   const isOverlapping = (a, b) => {
-    const buffer = 10;
+    const buffer = 5;
     return !(
       a.left + PHRASE_W + buffer < b.left ||
       a.left > b.left + PHRASE_W + buffer ||
@@ -127,12 +198,15 @@ export default function ChatPage({ character, setCharacter }) {
   return (
     <div className="w-full h-screen relative flex flex-col overflow-hidden">
 
-      {/* TITLE */}
-      <div className="relative p-3">
+      {/* TITLE - Centered */}
+      <div className="relative p-3 flex items-center justify-center">
         <h2 className="text-xl md:text-2xl font-title text-primary text-center">
           Chateando con {character}
         </h2>
-        <button onClick={() => setCharacter(null)} className="absolute right-4 top-3">
+        <button 
+          onClick={() => setCharacter(null)} 
+          className="absolute right-4 top-1/2 -translate-y-1/2"
+        >
           Volver
         </button>
       </div>
@@ -149,7 +223,11 @@ export default function ChatPage({ character, setCharacter }) {
         <div
           key={i}
           className={styles.floatingPhrase}
-          style={{ top: b.top, left: b.left }}
+          style={{ 
+            transform: `translate(${b.left}px, ${b.top}px)`,
+            top: 0,
+            left: 0
+          }}
         >
           <div className={styles.phraseBubble}>{phrases[i]}</div>
         </div>

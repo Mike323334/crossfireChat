@@ -2,7 +2,8 @@
   position: fixed;
   pointer-events: none;
   z-index: 5;
-  transition: top 0.15s linear, left 0.15s linear;
+  will-change: transform;
+  transform: translateZ(0); /* Hardware acceleration */
 }
 
 .phraseBubble {
