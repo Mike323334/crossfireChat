@@ -5,8 +5,6 @@ import styles from "../styles/ChatPage.module.css";
 export default function ChatPage({ character, setCharacter }) {
   const chatRef = useRef(null);
   const titleRef = useRef(null);
-  const [chatBounds, setChatBounds] = useState(null);
-  const [titleBounds, setTitleBounds] = useState(null);
   const PHRASE_W = 260;
   const PHRASE_H = 110;
   const GAP = 20;
@@ -33,49 +31,30 @@ export default function ChatPage({ character, setCharacter }) {
   const phrases = characterPhrases[character] || [];
 
   const [bubbles, setBubbles] = useState([]);
+  const hasPositionedRef = useRef(false);
 
-  // Observe chat bounds and title bounds
+  // Position bubbles statically ONLY ONCE at the sides of the chat window
   useEffect(() => {
+    if (!phrases.length || hasPositionedRef.current) return;
     if (!chatRef.current || !titleRef.current) return;
-    const updateBounds = () => {
-      setChatBounds(chatRef.current.getBoundingClientRect());
-      setTitleBounds(titleRef.current.getBoundingClientRect());
-    };
-    updateBounds();
 
-    const observer = new ResizeObserver(updateBounds);
-    observer.observe(chatRef.current);
-    if (titleRef.current) observer.observe(titleRef.current);
-    window.addEventListener("resize", updateBounds);
-    window.addEventListener("scroll", updateBounds);
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", updateBounds);
-      window.removeEventListener("scroll", updateBounds);
-    };
-  }, []);
-
-  // Position bubbles statically around the chat window
-  useEffect(() => {
-    if (!phrases.length || !chatBounds || !titleBounds) return;
-
-    const updateBubblePositions = () => {
+    const positionBubbles = () => {
+      if (hasPositionedRef.current) return;
+      
+      const chatRect = chatRef.current.getBoundingClientRect();
+      const titleRect = titleRef.current.getBoundingClientRect();
       const windowW = window.innerWidth;
       const windowH = window.innerHeight;
       
       // Chat bounds with generous padding to avoid overlap
       const chatPadding = 50;
-      const chatLeft = chatBounds.left - chatPadding;
-      const chatRight = chatBounds.right + chatPadding;
-      const chatTop = chatBounds.top - chatPadding;
-      const chatBottom = chatBounds.bottom + chatPadding;
+      const chatLeft = chatRect.left - chatPadding;
+      const chatRight = chatRect.right + chatPadding;
       
       // Title bounds with padding - ensure bubbles don't overlap title
-      const titleBottom = titleBounds.bottom + 30;
+      const titleBottom = titleRect.bottom + 30;
 
       const newBubbles = [];
-      const positions = [];
 
       // Generate static positions ONLY at the sides (left and right) of the chat window
       phrases.forEach((_, index) => {
@@ -112,8 +91,8 @@ export default function ChatPage({ character, setCharacter }) {
 
           tries++;
         } while (
-          (isOverlappingChat(position, chatBounds) || 
-           isOverlappingTitle(position, titleBounds)) && 
+          (isOverlappingChat(position, chatRect) || 
+           isOverlappingTitle(position, titleRect)) && 
           tries < maxTries
         );
 
@@ -124,16 +103,16 @@ export default function ChatPage({ character, setCharacter }) {
       });
 
       setBubbles(newBubbles);
+      hasPositionedRef.current = true; // Mark as positioned - NEVER update again
     };
 
-    // Wait a bit for chat and title to render
+    // Wait for elements to be ready, then position once
     const timer = setTimeout(() => {
-      updateBubblePositions();
-    }, 150);
+      positionBubbles();
+    }, 300);
     
-    // Don't update on resize - keep bubbles static
-    // Only position once when component mounts
-  }, [phrases, chatBounds, titleBounds]);
+    return () => clearTimeout(timer);
+  }, [phrases]);
 
 
   const isOverlappingChat = (bubble, chatBounds) => {
@@ -187,19 +166,19 @@ export default function ChatPage({ character, setCharacter }) {
       {/* STATIC BUBBLES AT SIDES OF CHAT */}
       {bubbles.map((b, i) => (
         <div
-          key={i}
+          key={`bubble-${i}-${b.left}-${b.top}`}
           className={styles.floatingPhrase}
           style={{ 
             position: 'fixed',
             left: `${b.left}px`,
             top: `${b.top}px`,
-            transform: 'none !important',
-            animation: 'none !important',
-            transition: 'none !important',
-            willChange: 'auto !important'
+            transform: 'none',
+            animation: 'none',
+            transition: 'none',
+            willChange: 'auto'
           }}
         >
-          <div className={styles.phraseBubble} style={{ animation: 'none !important', transform: 'none !important' }}>{phrases[i]}</div>
+          <div className={styles.phraseBubble} style={{ animation: 'none', transform: 'none', transition: 'none' }}>{phrases[i]}</div>
         </div>
       ))}
     </div>
