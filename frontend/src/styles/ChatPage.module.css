@@ -18,12 +18,30 @@
     visibility: hidden !important;
     opacity: 0 !important;
     pointer-events: none !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+  }
+  
+  .phraseBubble {
+    display: none !important;
   }
 }
 
 @media (max-width: 1024px) and (orientation: portrait) {
   .floatingPhrase {
     display: none !important;
+    visibility: hidden !important;
+  }
+}
+
+/* Additional mobile detection */
+@media (max-width: 480px) {
+  .floatingPhrase,
+  .phraseBubble {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
   }
 }
 

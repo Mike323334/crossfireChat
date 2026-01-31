@@ -32,26 +32,45 @@ export default function ChatPage({ character, setCharacter }) {
   const phrases = characterPhrases[character] || [];
 
   const [bubbles, setBubbles] = useState([]);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => {
+    // Initialize with current window size
+    if (typeof window !== 'undefined') {
+      return window.innerWidth <= 768;
+    }
+    return false;
+  });
   const positionedKeyRef = useRef(null);
 
-  // Detect mobile screen size
+  // Detect mobile screen size - check immediately and on resize
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      // Immediately clear bubbles if mobile
+      if (mobile) {
+        setBubbles([]);
+        positionedKeyRef.current = null;
+      }
     };
     
+    // Check immediately
     checkMobile();
-    window.addEventListener('resize', checkMobile);
     
-    return () => window.removeEventListener('resize', checkMobile);
+    // Check on resize
+    window.addEventListener('resize', checkMobile);
+    window.addEventListener('orientationchange', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+      window.removeEventListener('orientationchange', checkMobile);
+    };
   }, []);
 
   // Position bubbles ONLY ONCE per character - never update again
   // Don't show bubbles on mobile devices
   useEffect(() => {
-    // Always clear bubbles on mobile
-    if (isMobile) {
+    // Always clear bubbles on mobile - check first thing
+    if (isMobile || (typeof window !== 'undefined' && window.innerWidth <= 768)) {
       setBubbles([]);
       positionedKeyRef.current = null;
       return;
@@ -200,7 +219,7 @@ export default function ChatPage({ character, setCharacter }) {
       </div>
 
       {/* STATIC BUBBLES AT SIDES OF CHAT - Hidden on mobile */}
-      {!isMobile && bubbles.map((b, i) => (
+      {!isMobile && typeof window !== 'undefined' && window.innerWidth > 768 && bubbles.length > 0 && bubbles.map((b, i) => (
         <div
           key={`bubble-${i}-${b.left}-${b.top}`}
           className={styles.floatingPhrase}
