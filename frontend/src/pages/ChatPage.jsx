@@ -35,10 +35,18 @@ export default function ChatPage({ character, setCharacter }) {
   const positionedKeyRef = useRef(null);
 
   // Position bubbles ONLY ONCE per character - never update again
+  // Don't show bubbles on mobile devices
   useEffect(() => {
     const currentKey = character;
     if (positionedKeyRef.current === currentKey) return; // Already positioned for this character
     if (!phrases.length) return;
+    
+    // Check if mobile device - don't show bubbles on mobile
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      setBubbles([]);
+      return;
+    }
     
     const timer = setTimeout(() => {
       if (!chatRef.current || !titleRef.current) return;

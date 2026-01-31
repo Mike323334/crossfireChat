@@ -11,6 +11,13 @@
   top: var(--bubble-top, 0) !important;
 }
 
+/* Hide bubbles on mobile devices */
+@media (max-width: 768px) {
+  .floatingPhrase {
+    display: none !important;
+  }
+}
+
 .phraseBubble {
   width: 280px;
   min-height: 120px;
