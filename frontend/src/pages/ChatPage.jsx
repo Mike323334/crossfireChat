@@ -50,54 +50,22 @@ export default function ChatPage({ character, setCharacter }) {
     };
   }, []);
 
-  const getSafeZones = () => {
-    if (!chatBounds) return [];
-    const isDesktop = window.innerWidth >= 768;
-
-    const zones = [
-      { x: GAP, y: GAP, w: window.innerWidth - GAP * 2, h: chatBounds.top - GAP * 2 },
-      { x: GAP, y: chatBounds.bottom + GAP, w: window.innerWidth - GAP * 2, h: window.innerHeight - chatBounds.bottom - GAP * 2 }
-    ];
-
-    if (isDesktop) {
-      zones.push(
-        { x: GAP, y: chatBounds.top, w: chatBounds.left - GAP * 2, h: chatBounds.height },
-        { x: chatBounds.right + GAP, y: chatBounds.top, w: window.innerWidth - chatBounds.right - GAP * 2, h: chatBounds.height }
-      );
-    }
-
-    return zones.filter(z => z.w > PHRASE_W && z.h > PHRASE_H);
-  };
-
-  const isOverlapping = (a, b) => {
-    const buffer = 10;
-    return !(
-      a.left + PHRASE_W + buffer < b.left ||
-      a.left > b.left + PHRASE_W + buffer ||
-      a.top + PHRASE_H + buffer < b.top ||
-      a.top > b.top + PHRASE_H + buffer
-    );
-  };
-
-  // Initialize bubbles safely
+  // Initialize bubbles with random positions and velocities
   useEffect(() => {
-    if (!phrases.length || !chatBounds) return;
-
-    const zones = getSafeZones();
-    if (!zones.length) return;
-
+    if (!phrases.length) return;
     const newBubbles = [];
+    const windowW = window.innerWidth;
+    const windowH = window.innerHeight;
 
     phrases.forEach(() => {
       let box;
       let tries = 0;
       do {
-        const zone = zones[Math.floor(Math.random() * zones.length)];
         box = {
-          left: zone.x + Math.random() * (zone.w - PHRASE_W),
-          top: zone.y + Math.random() * (zone.h - PHRASE_H),
-          dx: (Math.random() - 0.5) * 0.6,
-          dy: (Math.random() - 0.5) * 0.6
+          left: GAP + Math.random() * (windowW - PHRASE_W - GAP * 2),
+          top: GAP + Math.random() * (windowH - PHRASE_H - GAP * 2),
+          dx: (Math.random() - 0.5) * 0.3, // slow movement
+          dy: (Math.random() - 0.5) * 0.3
         };
         tries++;
       } while (newBubbles.some(b => isOverlapping(b, box)) && tries < 200);
@@ -109,33 +77,52 @@ export default function ChatPage({ character, setCharacter }) {
     let animFrame;
 
     const animate = () => {
-      setBubbles(prev =>
-        prev.map((b, i) => {
+      setBubbles(prev => {
+        const updated = prev.map((b, i) => {
           let { top, left, dx, dy } = b;
           top += dy;
           left += dx;
 
-          const zone = zones[i % zones.length];
-
-          // Bounce off edges
-          if (left < zone.x || left + PHRASE_W > zone.x + zone.w) dx = -dx;
-          if (top < zone.y || top + PHRASE_H > zone.y + zone.h) dy = -dy;
-
-          // Keep inside zone
-          top = Math.max(zone.y, Math.min(zone.y + zone.h - PHRASE_H, top));
-          left = Math.max(zone.x, Math.min(zone.x + zone.w - PHRASE_W, left));
+          // Bounce off window edges
+          if (left < GAP) dx = Math.abs(dx);
+          if (left + PHRASE_W > window.innerWidth - GAP) dx = -Math.abs(dx);
+          if (top < GAP) dy = Math.abs(dy);
+          if (top + PHRASE_H > window.innerHeight - GAP) dy = -Math.abs(dy);
 
           return { top, left, dx, dy };
-        })
-      );
+        });
+
+        // Check collisions between bubbles
+        for (let i = 0; i < updated.length; i++) {
+          for (let j = i + 1; j < updated.length; j++) {
+            if (isOverlapping(updated[i], updated[j])) {
+              // Simple bounce: invert directions
+              [updated[i].dx, updated[j].dx] = [-updated[i].dx, -updated[j].dx];
+              [updated[i].dy, updated[j].dy] = [-updated[i].dy, -updated[j].dy];
+            }
+          }
+        }
+
+        return updated;
+      });
+
       animFrame = requestAnimationFrame(animate);
     };
 
     animate();
 
     return () => cancelAnimationFrame(animFrame);
+  }, [phrases]);
 
-  }, [phrases, chatBounds]);
+  const isOverlapping = (a, b) => {
+    const buffer = 10;
+    return !(
+      a.left + PHRASE_W + buffer < b.left ||
+      a.left > b.left + PHRASE_W + buffer ||
+      a.top + PHRASE_H + buffer < b.top ||
+      a.top > b.top + PHRASE_H + buffer
+    );
+  };
 
   return (
     <div className="w-full h-screen relative flex flex-col overflow-hidden">
@@ -158,16 +145,15 @@ export default function ChatPage({ character, setCharacter }) {
       </div>
 
       {/* FLOATING BUBBLES */}
-      {bubbles.length > 0 &&
-        bubbles.map((b, i) => (
-          <div
-            key={i}
-            className={styles.floatingPhrase}
-            style={{ top: b.top, left: b.left }}
-          >
-            <div className={styles.phraseBubble}>{phrases[i]}</div>
-          </div>
-        ))}
+      {bubbles.map((b, i) => (
+        <div
+          key={i}
+          className={styles.floatingPhrase}
+          style={{ top: b.top, left: b.left }}
+        >
+          <div className={styles.phraseBubble}>{phrases[i]}</div>
+        </div>
+      ))}
     </div>
   );
 }
