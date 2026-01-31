@@ -66,10 +66,10 @@ export default function ChatPage({ character, setCharacter }) {
         box = {
           left: GAP + Math.random() * (windowW - PHRASE_W - GAP * 2),
           top: GAP + Math.random() * (windowH - PHRASE_H - GAP * 2),
-          dx: (Math.random() - 0.5) * 0.5, // Smooth movement speed
-          dy: (Math.random() - 0.5) * 0.5,
-          vx: (Math.random() - 0.5) * 0.5, // Velocity for smooth acceleration
-          vy: (Math.random() - 0.5) * 0.5
+          dx: (Math.random() - 0.5) * 0.15, // Slow, smooth movement
+          dy: (Math.random() - 0.5) * 0.15,
+          vx: (Math.random() - 0.5) * 0.15, // Slow velocity for gentle floating
+          vy: (Math.random() - 0.5) * 0.15
         };
         tries++;
       } while (
@@ -196,24 +196,24 @@ export default function ChatPage({ character, setCharacter }) {
   };
 
   return (
-    <div className="w-full h-screen relative flex flex-col overflow-hidden">
+    <div className="w-full h-screen relative flex flex-col overflow-hidden bg-gradient-to-br from-gray-900 via-red-900 to-black">
 
       {/* TITLE - Centered */}
-      <div className="relative p-3 flex items-center justify-center">
-        <h2 className="text-xl md:text-2xl font-title text-primary text-center">
-          Chateando con {character}
+      <div className="relative p-4 md:p-6 flex items-center justify-center border-b border-white/10 backdrop-blur-sm bg-black/20">
+        <h2 className="text-2xl md:text-3xl font-title text-white text-center drop-shadow-lg">
+          Chateando con <span className="text-primary font-bold">{character}</span>
         </h2>
         <button 
           onClick={() => setCharacter(null)} 
-          className="absolute right-4 top-1/2 -translate-y-1/2"
+          className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg backdrop-blur-sm transition-all duration-300 hover:scale-105 border border-white/20"
         >
-          Volver
+          ← Volver
         </button>
       </div>
 
       {/* CENTER CHAT */}
-      <div className="flex-1 flex items-center justify-center">
-        <div ref={chatRef} className="relative z-20 w-full max-w-md">
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div ref={chatRef} className="relative z-20 w-full max-w-2xl">
           <ChatWindow character={character} />
         </div>
       </div>

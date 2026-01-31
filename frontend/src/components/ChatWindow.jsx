@@ -26,16 +26,26 @@ export default function ChatWindow({ character }) {
   }, [messages]);
 
   return (
-    <div className="flex flex-col border rounded-lg p-3 bg-white shadow h-[65vh] md:h-[60vh]">
-      <div className="flex-1 overflow-y-auto space-y-2 mb-3">
+    <div className="flex flex-col border border-white/20 rounded-2xl p-4 md:p-6 bg-white/10 backdrop-blur-md shadow-2xl h-[65vh] md:h-[70vh]">
+      <div className="flex-1 overflow-y-auto space-y-3 mb-4 scrollbar-hide pr-2">
+        {messages.length === 0 && (
+          <div className="text-center text-white/70 italic py-8">
+            Comienza la conversación con {character}...
+          </div>
+        )}
         {messages.map((m, i) => {
           const isUser = m.sender === "usuario";
           return (
             <div key={i} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-              <div className={`p-3 rounded-lg max-w-xs md:max-w-md ${
-                isUser ? "bg-primary text-white" : "bg-accent text-gray-800"
+              <div className={`p-4 rounded-2xl max-w-xs md:max-w-md shadow-lg ${
+                isUser 
+                  ? "bg-gradient-to-br from-primary to-red-700 text-white" 
+                  : "bg-white/90 text-gray-800 backdrop-blur-sm"
               }`}>
-                {m.text}
+                <div className="text-sm font-semibold mb-1 opacity-80">
+                  {isUser ? "Tú" : character}
+                </div>
+                <div className="text-sm md:text-base leading-relaxed">{m.text}</div>
               </div>
             </div>
           );
@@ -43,19 +53,19 @@ export default function ChatWindow({ character }) {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-3 pt-3 border-t border-white/20">
         <input
-          className="flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+          className="flex-1 p-3 md:p-4 border border-white/30 rounded-xl bg-white/20 backdrop-blur-sm text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
           value={input}
           onChange={e => setInput(e.target.value)}
-          placeholder="Type a message..."
+          placeholder="Escribe un mensaje..."
           onKeyDown={e => e.key === "Enter" && handleSend()}
         />
         <button
-          className="bg-primary text-white px-5 rounded-lg font-bold"
+          className="bg-gradient-to-r from-primary to-red-700 text-white px-6 md:px-8 rounded-xl font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300 border border-white/20"
           onClick={handleSend}
         >
-          Send
+          Enviar
         </button>
       </div>
     </div>
