@@ -35,26 +35,21 @@ export default function ChatPage({ character, setCharacter }) {
   const phrases = characterPhrases[character] || [];
 
   // Observe chat position
-  useEffect(() => {
-    if (!chatRef.current) return;
+// Recalculate positions every 12s so they slowly drift to new safe areas
+useEffect(() => {
+  if (!phrases.length || !chatBounds) return;
 
-    const updateBounds = () => {
-      setChatBounds(chatRef.current.getBoundingClientRect());
-    };
+  const interval = setInterval(() => {
+    setPhrasePositions(prev => {
+      const updated = [];
+      prev.forEach(() => updated.push(getRandomPosition(updated)));
+      return updated;
+    });
+  }, 12000);
 
-    updateBounds();
-    const resizeObserver = new ResizeObserver(updateBounds);
-    resizeObserver.observe(chatRef.current);
+  return () => clearInterval(interval);
+}, [character, chatBounds]);
 
-    window.addEventListener("resize", updateBounds);
-    window.addEventListener("scroll", updateBounds);
-
-    return () => {
-      resizeObserver.disconnect();
-      window.removeEventListener("resize", updateBounds);
-      window.removeEventListener("scroll", updateBounds);
-    };
-  }, []);
 
   // Zones where phrases can appear
   const getSafeZones = () => {
