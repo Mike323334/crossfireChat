@@ -11,8 +11,17 @@
   top: var(--bubble-top, 0) !important;
 }
 
-/* Hide bubbles on mobile devices */
+/* Hide bubbles on mobile devices - multiple breakpoints for safety */
 @media (max-width: 768px) {
+  .floatingPhrase {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+}
+
+@media (max-width: 1024px) and (orientation: portrait) {
   .floatingPhrase {
     display: none !important;
   }

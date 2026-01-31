@@ -36,7 +36,7 @@ export default function ChatWindow({ character }) {
             <div className="text-4xl mb-3">💬</div>
             <div className="text-lg md:text-xl font-semibold">Comienza la conversación con</div>
             <div className="text-2xl md:text-3xl text-primary font-bold">{character}</div>
-            <div className="text-sm text-white/60 mt-4">Las burbujas flotan suavemente alrededor...</div>
+            
           </div>
         )}
         {messages.map((m, i) => {

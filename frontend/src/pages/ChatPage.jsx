@@ -32,21 +32,34 @@ export default function ChatPage({ character, setCharacter }) {
   const phrases = characterPhrases[character] || [];
 
   const [bubbles, setBubbles] = useState([]);
+  const [isMobile, setIsMobile] = useState(false);
   const positionedKeyRef = useRef(null);
+
+  // Detect mobile screen size
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Position bubbles ONLY ONCE per character - never update again
   // Don't show bubbles on mobile devices
   useEffect(() => {
+    // Always clear bubbles on mobile
+    if (isMobile) {
+      setBubbles([]);
+      positionedKeyRef.current = null;
+      return;
+    }
+
     const currentKey = character;
     if (positionedKeyRef.current === currentKey) return; // Already positioned for this character
     if (!phrases.length) return;
-    
-    // Check if mobile device - don't show bubbles on mobile
-    const isMobile = window.innerWidth <= 768;
-    if (isMobile) {
-      setBubbles([]);
-      return;
-    }
     
     const timer = setTimeout(() => {
       if (!chatRef.current || !titleRef.current) return;
@@ -186,8 +199,8 @@ export default function ChatPage({ character, setCharacter }) {
         </div>
       </div>
 
-      {/* STATIC BUBBLES AT SIDES OF CHAT */}
-      {bubbles.map((b, i) => (
+      {/* STATIC BUBBLES AT SIDES OF CHAT - Hidden on mobile */}
+      {!isMobile && bubbles.map((b, i) => (
         <div
           key={`bubble-${i}-${b.left}-${b.top}`}
           className={styles.floatingPhrase}
