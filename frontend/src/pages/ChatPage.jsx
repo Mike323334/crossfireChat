@@ -11,7 +11,6 @@ export default function ChatPage({ character, setCharacter }) {
   const PHRASE_H = 110;
   const GAP = 40;
 
-  // 💬 EVA PHRASES
   const evaPhrases = [
     "La oscuridad que nos rodea es profunda, pero nuestro amor es más fuerte.",
     "When I'm with you, everything feels quieter…",
@@ -21,7 +20,6 @@ export default function ChatPage({ character, setCharacter }) {
     "Maybe we’re both still figuring things out… together."
   ];
 
-  // 💬 GIDEON PHRASES
   const gideonPhrases = [
     "I'd rather not think about the past.",
     "Mi vida con Gideon es un torbellino de pasión y peligro.",
@@ -34,30 +32,33 @@ export default function ChatPage({ character, setCharacter }) {
   const characterPhrases = { Gideon: gideonPhrases, Eva: evaPhrases };
   const phrases = characterPhrases[character] || [];
 
-  // Observe chat position
-// Recalculate positions every 12s so they slowly drift to new safe areas
-useEffect(() => {
-  if (!phrases.length || !chatBounds) return;
+  // Observe chat bounds
+  useEffect(() => {
+    if (!chatRef.current) return;
+    const updateBounds = () => setChatBounds(chatRef.current.getBoundingClientRect());
+    updateBounds();
 
-  const interval = setInterval(() => {
-    setPhrasePositions(prev => {
-      const updated = [];
-      prev.forEach(() => updated.push(getRandomPosition(updated)));
-      return updated;
-    });
-  }, 12000);
+    const observer = new ResizeObserver(updateBounds);
+    observer.observe(chatRef.current);
+    window.addEventListener("resize", updateBounds);
+    window.addEventListener("scroll", updateBounds);
 
-  return () => clearInterval(interval);
-}, [character, chatBounds]);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateBounds);
+      window.removeEventListener("scroll", updateBounds);
+    };
+  }, []);
 
-
-  // Zones where phrases can appear
+  // Zones around chat window
   const getSafeZones = () => {
     if (!chatBounds) return [];
     const isDesktop = window.innerWidth >= 768;
 
     const zones = [
+      // TOP
       { x: GAP, y: GAP, w: window.innerWidth - GAP * 2, h: chatBounds.top - GAP * 2 },
+      // BOTTOM
       { x: GAP, y: chatBounds.bottom + GAP, w: window.innerWidth - GAP * 2, h: window.innerHeight - chatBounds.bottom - GAP * 2 }
     ];
 
@@ -71,7 +72,7 @@ useEffect(() => {
     return zones.filter(z => z.w > PHRASE_W && z.h > PHRASE_H);
   };
 
-  // True rectangle collision detection
+  // Rectangle collision
   const isOverlapping = (a, b) => {
     return !(
       a.left + PHRASE_W + GAP < b.left ||
@@ -81,6 +82,7 @@ useEffect(() => {
     );
   };
 
+  // Random position
   const getRandomPosition = (existing) => {
     const zones = getSafeZones();
     if (!zones.length) return { top: 50, left: 50 };
@@ -95,10 +97,10 @@ useEffect(() => {
       if (!existing.some(p => isOverlapping(p, box))) return box;
       tries++;
     }
-
     return { top: zones[0].y, left: zones[0].x };
   };
 
+  // Initial placement
   useEffect(() => {
     if (!phrases.length || !chatBounds) return;
     const newPositions = [];
@@ -106,8 +108,21 @@ useEffect(() => {
     setPhrasePositions(newPositions);
   }, [character, chatBounds]);
 
+  // Slowly drift bubbles
+  useEffect(() => {
+    if (!phrases.length || !chatBounds) return;
+    const interval = setInterval(() => {
+      setPhrasePositions(prev => {
+        const updated = [];
+        prev.forEach(() => updated.push(getRandomPosition(updated)));
+        return updated;
+      });
+    }, 12000);
+    return () => clearInterval(interval);
+  }, [character, chatBounds]);
+
   return (
-    <div className="w-full h-screen relative overflow-hidden flex flex-col">
+    <div className="w-full h-screen relative flex flex-col overflow-hidden">
 
       {/* TITLE */}
       <div className="relative p-3">

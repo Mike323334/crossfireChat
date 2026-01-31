@@ -2,7 +2,7 @@
   position: fixed;
   pointer-events: none;
   z-index: 5;
-  animation: floatMove 18s ease-in-out infinite alternate;
+  transition: top 3s ease, left 3s ease; /* smooth drifting */
 }
 
 .phraseBubble {
@@ -11,12 +11,12 @@
   padding: 16px;
   border-radius: 18px;
 
-  /* ✨ Glass transparent look */
+  /* glass transparent effect */
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 
-  /* 🌑 Soft black shadow */
+  /* soft black shadow */
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.35);
 
   color: white;
@@ -25,13 +25,4 @@
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-/* 🌊 Floating movement animation */
-@keyframes floatMove {
-  0%   { transform: translate(0px, 0px); }
-  25%  { transform: translate(10px, -12px); }
-  50%  { transform: translate(-8px, 14px); }
-  75%  { transform: translate(12px, 6px); }
-  100% { transform: translate(-10px, -10px); }
 }
