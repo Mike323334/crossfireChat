@@ -11,22 +11,21 @@ export default function ChatPage({ character, setCharacter }) {
   const MIN_DISTANCE = PHRASE_W + 30; // Minimum distance between bubbles to avoid overlapping
 
   const evaPhrases = [
-    
+    "You're the first man who's ever made me feel like I'm home.",
+    "No te preocupes, Gideon, estoy aquí para ti",
     "When I'm with you, everything feels quieter…",
     "Mi corazón late con fuerza cuando estoy cerca de él.",
     "I'm not perfect, but what I feel is real.",
     "Me duele amarte, pero no puedo evitarlo.",
-    
+    "Mi vida con Gideon es un torbellino de pasión y peligro."
   ];
 
   const gideonPhrases = [
     "Eva, eres la única mujer que ha podido ver más allá de mi armadura, la única que ha logrado hacer que me sienta vivo.",
-    "You're mine, Eva. You've always been mine." ,
-    "Mi vida con Gideon es un torbellino de pasión y peligro.",
+    "You're mine, Eva. You've always been mine.",
     "What's on your mind?",
     "Eres la única que ha podido calmar la tormenta dentro de mí.",
-    "You're the reason I breathe.",
-    
+    "You're the reason I breathe."
   ];
 
   const characterPhrases = { Gideon: gideonPhrases, Eva: evaPhrases };
