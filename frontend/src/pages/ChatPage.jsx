@@ -58,43 +58,48 @@ export default function ChatPage({ character, setCharacter }) {
     const updateBubblePositions = () => {
       const windowW = window.innerWidth;
       const windowH = window.innerHeight;
-      const headerHeight = 100; // Approximate header height
+      const headerHeight = chatBounds.top > 0 ? chatBounds.top - 200 : 100;
       
-      // Chat bounds with padding to avoid overlap
-      const chatLeft = chatBounds.left - PHRASE_W - 40;
-      const chatRight = chatBounds.right + 40;
-      const chatTop = chatBounds.top - PHRASE_H - 40;
-      const chatBottom = chatBounds.bottom + 40;
+      // Chat bounds with generous padding to avoid overlap
+      const chatPadding = 50;
+      const chatLeft = chatBounds.left - chatPadding;
+      const chatRight = chatBounds.right + chatPadding;
+      const chatTop = chatBounds.top - chatPadding;
+      const chatBottom = chatBounds.bottom + chatPadding;
 
       const newBubbles = [];
       const positions = [];
 
-      // Generate positions around the chat window
+      // Generate positions around the chat window - better distribution
       phrases.forEach((_, index) => {
         let position;
         let tries = 0;
-        const maxTries = 200;
+        const maxTries = 300;
 
         do {
-          // Distribute bubbles around the chat in different zones
+          // Distribute bubbles evenly around the chat
           const zone = index % 4; // 4 zones: top, right, bottom, left
           let left, top;
 
           switch (zone) {
-            case 0: // Top area
+            case 0: // Top area - above chat
               left = GAP + Math.random() * (windowW - PHRASE_W - GAP * 2);
-              top = headerHeight + GAP + Math.random() * Math.max(0, chatTop - headerHeight - GAP - PHRASE_H);
+              const topAreaHeight = Math.max(50, chatTop - headerHeight - GAP);
+              top = headerHeight + GAP + Math.random() * topAreaHeight;
               break;
-            case 1: // Right area
-              left = chatRight + Math.random() * Math.max(0, windowW - chatRight - PHRASE_W - GAP);
+            case 1: // Right area - to the right of chat
+              const rightAreaWidth = Math.max(50, windowW - chatRight - GAP);
+              left = chatRight + Math.random() * rightAreaWidth;
               top = headerHeight + GAP + Math.random() * (windowH - headerHeight - PHRASE_H - GAP);
               break;
-            case 2: // Bottom area
+            case 2: // Bottom area - below chat
               left = GAP + Math.random() * (windowW - PHRASE_W - GAP * 2);
-              top = chatBottom + Math.random() * Math.max(0, windowH - chatBottom - PHRASE_H - GAP);
+              const bottomAreaHeight = Math.max(50, windowH - chatBottom - GAP);
+              top = chatBottom + Math.random() * bottomAreaHeight;
               break;
-            case 3: // Left area
-              left = GAP + Math.random() * Math.max(0, chatLeft - GAP - PHRASE_W);
+            case 3: // Left area - to the left of chat
+              const leftAreaWidth = Math.max(50, chatLeft - GAP - PHRASE_W);
+              left = GAP + Math.random() * leftAreaWidth;
               top = headerHeight + GAP + Math.random() * (windowH - headerHeight - PHRASE_H - GAP);
               break;
           }
@@ -121,15 +126,22 @@ export default function ChatPage({ character, setCharacter }) {
       setBubbles(newBubbles);
     };
 
-    updateBubblePositions();
+    // Wait a bit for chat to render
+    const timer = setTimeout(() => {
+      updateBubblePositions();
+    }, 100);
     
     // Update on window resize
     const handleResize = () => {
-      setTimeout(updateBubblePositions, 100);
+      clearTimeout(timer);
+      setTimeout(updateBubblePositions, 150);
     };
     
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", handleResize);
+    };
   }, [phrases, chatBounds]);
 
   const isTooClose = (a, b) => {
@@ -143,7 +155,7 @@ export default function ChatPage({ character, setCharacter }) {
 
   const isOverlappingChat = (bubble, chatBounds) => {
     if (!chatBounds) return false;
-    const buffer = 30; // Extra padding around chat
+    const buffer = 50; // Extra padding around chat to ensure visibility
     return !(
       bubble.left + PHRASE_W + buffer < chatBounds.left ||
       bubble.left > chatBounds.right + buffer ||
@@ -187,7 +199,9 @@ export default function ChatPage({ character, setCharacter }) {
             position: 'fixed',
             left: `${b.left}px`,
             top: `${b.top}px`,
-            transform: 'none'
+            transform: 'none',
+            animation: 'none',
+            transition: 'none'
           }}
         >
           <div className={styles.phraseBubble}>{phrases[i]}</div>
