@@ -57,144 +57,100 @@ export default function ChatPage({ character, setCharacter }) {
     };
   }, []);
 
-  // Position bubbles and make them move slowly
+  // Position bubbles statically around the chat window
   useEffect(() => {
     if (!phrases.length || !chatBounds || !titleBounds) return;
 
-    const windowW = window.innerWidth;
-    const windowH = window.innerHeight;
-    
-    // Chat bounds with generous padding to avoid overlap
-    const chatPadding = 50;
-    const chatLeft = chatBounds.left - chatPadding;
-    const chatRight = chatBounds.right + chatPadding;
-    const chatTop = chatBounds.top - chatPadding;
-    const chatBottom = chatBounds.bottom + chatPadding;
-    
-    // Title bounds with padding
-    const titleBottom = titleBounds.bottom + 20;
+    const updateBubblePositions = () => {
+      const windowW = window.innerWidth;
+      const windowH = window.innerHeight;
+      
+      // Chat bounds with generous padding to avoid overlap
+      const chatPadding = 50;
+      const chatLeft = chatBounds.left - chatPadding;
+      const chatRight = chatBounds.right + chatPadding;
+      const chatTop = chatBounds.top - chatPadding;
+      const chatBottom = chatBounds.bottom + chatPadding;
+      
+      // Title bounds with padding - ensure bubbles don't overlap title
+      const titleBottom = titleBounds.bottom + 30;
 
-    const newBubbles = [];
-    const positions = [];
+      const newBubbles = [];
+      const positions = [];
 
-    // Generate initial positions around the chat window
-    phrases.forEach((_, index) => {
-      let position;
-      let tries = 0;
-      const maxTries = 300;
+      // Generate static positions around the chat window
+      phrases.forEach((_, index) => {
+        let position;
+        let tries = 0;
+        const maxTries = 300;
 
-      do {
-        // Distribute bubbles evenly around the chat
-        const zone = index % 4; // 4 zones: top, right, bottom, left
-        let left, top;
+        do {
+          // Distribute bubbles evenly around the chat
+          const zone = index % 4; // 4 zones: top, right, bottom, left
+          let left, top;
 
-        switch (zone) {
-          case 0: // Top area - above chat but below title
-            left = GAP + Math.random() * (windowW - PHRASE_W - GAP * 2);
-            const topAreaHeight = Math.max(50, chatTop - titleBottom - GAP);
-            top = titleBottom + GAP + Math.random() * topAreaHeight;
-            break;
-          case 1: // Right area - to the right of chat
-            const rightAreaWidth = Math.max(50, windowW - chatRight - GAP);
-            left = chatRight + Math.random() * rightAreaWidth;
-            top = titleBottom + GAP + Math.random() * (windowH - titleBottom - PHRASE_H - GAP);
-            break;
-          case 2: // Bottom area - below chat
-            left = GAP + Math.random() * (windowW - PHRASE_W - GAP * 2);
-            const bottomAreaHeight = Math.max(50, windowH - chatBottom - GAP);
-            top = chatBottom + Math.random() * bottomAreaHeight;
-            break;
-          case 3: // Left area - to the left of chat
-            const leftAreaWidth = Math.max(50, chatLeft - GAP - PHRASE_W);
-            left = GAP + Math.random() * leftAreaWidth;
-            top = titleBottom + GAP + Math.random() * (windowH - titleBottom - PHRASE_H - GAP);
-            break;
+          switch (zone) {
+            case 0: // Top area - above chat but below title
+              left = GAP + Math.random() * (windowW - PHRASE_W - GAP * 2);
+              const topAreaHeight = Math.max(50, chatTop - titleBottom - GAP);
+              top = titleBottom + GAP + Math.random() * topAreaHeight;
+              break;
+            case 1: // Right area - to the right of chat
+              const rightAreaWidth = Math.max(50, windowW - chatRight - GAP);
+              left = chatRight + Math.random() * rightAreaWidth;
+              top = titleBottom + GAP + Math.random() * (windowH - titleBottom - PHRASE_H - GAP);
+              break;
+            case 2: // Bottom area - below chat
+              left = GAP + Math.random() * (windowW - PHRASE_W - GAP * 2);
+              const bottomAreaHeight = Math.max(50, windowH - chatBottom - GAP);
+              top = chatBottom + Math.random() * bottomAreaHeight;
+              break;
+            case 3: // Left area - to the left of chat
+              const leftAreaWidth = Math.max(50, chatLeft - GAP - PHRASE_W);
+              left = GAP + Math.random() * leftAreaWidth;
+              top = titleBottom + GAP + Math.random() * (windowH - titleBottom - PHRASE_H - GAP);
+              break;
+          }
+
+          // Ensure within bounds
+          left = Math.max(GAP, Math.min(left, windowW - PHRASE_W - GAP));
+          top = Math.max(titleBottom + GAP, Math.min(top, windowH - PHRASE_H - GAP));
+
+          position = { left, top };
+
+          tries++;
+        } while (
+          (isOverlappingChat(position, chatBounds) || 
+           isOverlappingTitle(position, titleBounds) ||
+           positions.some(p => isTooClose(p, position))) && 
+          tries < maxTries
+        );
+
+        if (tries < maxTries) {
+          positions.push(position);
+          newBubbles.push(position);
         }
-
-        // Ensure within bounds
-        left = Math.max(GAP, Math.min(left, windowW - PHRASE_W - GAP));
-        top = Math.max(titleBottom + GAP, Math.min(top, windowH - PHRASE_H - GAP));
-
-        position = { 
-          left, 
-          top,
-          vx: (Math.random() - 0.5) * 0.008, // Very slow movement
-          vy: (Math.random() - 0.5) * 0.008
-        };
-
-        tries++;
-      } while (
-        (isOverlappingChat(position, chatBounds) || 
-         isOverlappingTitle(position, titleBounds) ||
-         positions.some(p => isTooClose(p, position))) && 
-        tries < maxTries
-      );
-
-      if (tries < maxTries) {
-        positions.push(position);
-        newBubbles.push(position);
-      }
-    });
-
-    setBubbles(newBubbles);
-
-    // Animate bubbles slowly
-    let animFrame;
-    let lastTime = performance.now();
-
-    const animate = (currentTime) => {
-      const deltaTime = Math.min((currentTime - lastTime) / 16, 2);
-      lastTime = currentTime;
-
-      setBubbles(prev => {
-        const updated = prev.map((b) => {
-          let { top, left, vx, vy } = b;
-          
-          // Update position with very slow velocity
-          left += vx * deltaTime * 0.3; // Slow down by 70%
-          top += vy * deltaTime * 0.3;
-
-          const maxX = window.innerWidth - PHRASE_W - GAP;
-          const maxY = window.innerHeight - PHRASE_H - GAP;
-          const minY = titleBounds ? titleBounds.bottom + GAP : GAP;
-
-          // Bounce off edges with damping
-          if (left < GAP) {
-            left = GAP;
-            vx = Math.abs(vx) * 0.8;
-          } else if (left > maxX) {
-            left = maxX;
-            vx = -Math.abs(vx) * 0.8;
-          }
-
-          if (top < minY) {
-            top = minY;
-            vy = Math.abs(vy) * 0.8;
-          } else if (top > maxY) {
-            top = maxY;
-            vy = -Math.abs(vy) * 0.8;
-          }
-
-          // Check if overlapping with chat or title
-          if (isOverlappingChat({ left, top }, chatBounds) || 
-              isOverlappingTitle({ left, top }, titleBounds)) {
-            // Reverse direction
-            vx = -vx;
-            vy = -vy;
-          }
-
-          return { top, left, vx, vy };
-        });
-
-        return updated;
       });
 
-      animFrame = requestAnimationFrame(animate);
+      setBubbles(newBubbles);
     };
 
-    animate(performance.now());
-
-    return () => cancelAnimationFrame(animFrame);
+    // Wait a bit for chat and title to render
+    const timer = setTimeout(() => {
+      updateBubblePositions();
+    }, 150);
+    
+    // Update on window resize
+    const handleResize = () => {
+      clearTimeout(timer);
+      setTimeout(updateBubblePositions, 200);
+    };
+    
+    window.addEventListener("resize", handleResize);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", handleResize);
+    };
   }, [phrases, chatBounds, titleBounds]);
 
   const isTooClose = (a, b) => {
@@ -254,7 +210,7 @@ export default function ChatPage({ character, setCharacter }) {
         </div>
       </div>
 
-      {/* SLOWLY MOVING BUBBLES AROUND CHAT */}
+      {/* STATIC BUBBLES AROUND CHAT */}
       {bubbles.map((b, i) => (
         <div
           key={i}
@@ -263,7 +219,9 @@ export default function ChatPage({ character, setCharacter }) {
             position: 'fixed',
             left: `${b.left}px`,
             top: `${b.top}px`,
-            transform: 'translateZ(0)'
+            transform: 'none',
+            animation: 'none',
+            transition: 'none'
           }}
         >
           <div className={styles.phraseBubble}>{phrases[i]}</div>

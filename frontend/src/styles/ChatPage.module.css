@@ -2,8 +2,9 @@
   position: fixed;
   pointer-events: none;
   z-index: 5;
-  will-change: transform;
-  transform: translateZ(0); /* Hardware acceleration */
+  will-change: auto;
+  animation: none !important;
+  transition: none !important;
 }
 
 .phraseBubble {
