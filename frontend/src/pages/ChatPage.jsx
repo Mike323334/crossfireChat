@@ -10,41 +10,28 @@ export default function ChatPage({ character, setCharacter }) {
   const PHRASE_W = 260;
   const PHRASE_H = 110;
   const GAP = 40;
-  const MIN_DISTANCE = 170;
 
-  // 💬 Eva phrases (softer emotional tone)
   const evaPhrases = [
-    "La oscuridad que nos rodea es profunda, pero nuestra amor es más fuerte, más intenso, y más apasionado.",
-    "When I'm with you, everything feels quieter… like the world fades away.",
-    "Mi corazón late con fuerza cuando estoy cerca de él, como si supiera que mi vida está a punto de cambiar para siempre.",
+    "La oscuridad que nos rodea es profunda, pero nuestro amor es más fuerte.",
+    "When I'm with you, everything feels quieter…",
+    "Mi corazón late con fuerza cuando estoy cerca de él.",
     "I’m not perfect, but what I feel is real.",
-    "Me duele amarte, pero no puedo evitarlo, eres adictivo, eres mi veneno y mi antídoto",
+    "Me duele amarte, pero no puedo evitarlo.",
     "Maybe we’re both still figuring things out… together."
   ];
 
-  // 💬 Gideon phrases
   const gideonPhrases = [
-    "I'd rather not think about the past, it's the present that concerns me, especially when it comes to him, Gideon.",
-    "Mi vida con Gideon es un torbellino de pasión y peligro, pero no cambiaría nada por el mundo.",
-    "What's on your mind, beautiful? You seem a little distracted. Is everything all right?",
-    "Eva, eres la única que ha podido calmar la tormenta que hay dentro de mí, la única que ha podido hacer que me sienta vivo de nuevo.",
-    "My entire existence has been defined by my need for you, Eva. You're the reason I breathe, the reason I live.",
-    "Eres la única persona que ha logrado hacer que me sienta vivo...",
-    "La pasión que arde dentro de mí es difícil de controlar cuando estoy cerca de ti, Eva.",
-    "Eva, mi amor, tu presencia me hace sentir vivo...",
-    "I want you, Eva. I want all of you. My love for you is a force of nature.",
-    "Give yourself to me, Eva. Let go of your fears and doubts."
+    "I'd rather not think about the past.",
+    "Mi vida con Gideon es un torbellino de pasión y peligro.",
+    "What's on your mind?",
+    "Eres la única que ha podido calmar la tormenta dentro de mí.",
+    "You're the reason I breathe.",
+    "Eres la única persona que me hace sentir vivo."
   ];
 
-  // 🧠 Phrase map per character (scalable)
-  const characterPhrases = {
-    Gideon: gideonPhrases,
-    Eva: evaPhrases
-  };
-
+  const characterPhrases = { Gideon: gideonPhrases, Eva: evaPhrases };
   const phrases = characterPhrases[character] || [];
 
-  // Observe chat box size & movement
   useEffect(() => {
     if (!chatRef.current) return;
 
@@ -67,111 +54,67 @@ export default function ChatPage({ character, setCharacter }) {
     };
   }, []);
 
-  // Compute safe zones around chat
   const getSafeZones = () => {
     if (!chatBounds) return [];
 
     return [
-      // TOP
-      {
-        x: GAP,
-        y: GAP,
-        w: window.innerWidth - GAP * 2,
-        h: chatBounds.top - GAP * 2
-      },
-      // BOTTOM
-      {
-        x: GAP,
-        y: chatBounds.bottom + GAP,
-        w: window.innerWidth - GAP * 2,
-        h: window.innerHeight - chatBounds.bottom - GAP * 2
-      },
-      // LEFT
-      {
-        x: GAP,
-        y: chatBounds.top,
-        w: chatBounds.left - GAP * 2,
-        h: chatBounds.height
-      },
-      // RIGHT
-      {
-        x: chatBounds.right + GAP,
-        y: chatBounds.top,
-        w: window.innerWidth - chatBounds.right - GAP * 2,
-        h: chatBounds.height
-      }
+      { x: GAP, y: GAP, w: window.innerWidth - GAP * 2, h: chatBounds.top - GAP * 2 },
+      { x: GAP, y: chatBounds.bottom + GAP, w: window.innerWidth - GAP * 2, h: window.innerHeight - chatBounds.bottom - GAP * 2 }
     ].filter(z => z.w > PHRASE_W && z.h > PHRASE_H);
   };
 
-  const getRandomPosition = (existingPositions) => {
+  const isOverlapping = (a, b) => {
+    return !(
+      a.left + PHRASE_W + GAP < b.left ||
+      a.left > b.left + PHRASE_W + GAP ||
+      a.top + PHRASE_H + GAP < b.top ||
+      a.top > b.top + PHRASE_H + GAP
+    );
+  };
+
+  const getRandomPosition = (existing) => {
     const zones = getSafeZones();
     if (!zones.length) return { top: 50, left: 50 };
 
     let tries = 0;
-
     while (tries < 100) {
       const zone = zones[Math.floor(Math.random() * zones.length)];
-
       const left = zone.x + Math.random() * (zone.w - PHRASE_W);
       const top = zone.y + Math.random() * (zone.h - PHRASE_H);
+      const box = { top, left };
 
-      const tooClose = existingPositions.some(pos =>
-        Math.abs(pos.top - top) < MIN_DISTANCE &&
-        Math.abs(pos.left - left) < MIN_DISTANCE
-      );
-
-      if (!tooClose) return { top, left };
+      if (!existing.some(p => isOverlapping(p, box))) return box;
       tries++;
     }
 
     return { top: zones[0].y, left: zones[0].x };
   };
 
-  // Initial placement
   useEffect(() => {
     if (!phrases.length || !chatBounds) return;
-
     const newPositions = [];
-    phrases.forEach(() => {
-      newPositions.push(getRandomPosition(newPositions));
-    });
+    phrases.forEach(() => newPositions.push(getRandomPosition(newPositions)));
     setPhrasePositions(newPositions);
   }, [character, chatBounds]);
 
-  // Floating movement (reposition every 7s)
-  useEffect(() => {
-    if (!phrases.length || !chatBounds) return;
-
-    const interval = setInterval(() => {
-      setPhrasePositions(prev => {
-        const updated = [];
-        prev.forEach(() => updated.push(getRandomPosition(updated)));
-        return updated;
-      });
-    }, 7000);
-
-    return () => clearInterval(interval);
-  }, [character, chatBounds]);
-
   return (
-    <div className="w-full max-w-4xl mx-auto p-0 sm:p-4 md:p-6 relative h-screen sm:min-h-screen">
+    <div className="w-full max-w-4xl mx-auto p-0 sm:p-4 md:p-6 relative h-screen sm:min-h-screen flex flex-col overflow-hidden">
+      
       <div className="flex justify-between items-center mb-0 sm:mb-4 p-2 sm:p-0">
         <h2 className="text-xl sm:text-xl md:text-2xl font-title text-primary">
           Chateando con {character}
         </h2>
-        <button
-          onClick={() => setCharacter(null)}
-          className="text-base sm:text-base"
-        >
-          Volver
-        </button>
+        <button onClick={() => setCharacter(null)} className="text-base">Volver</button>
       </div>
 
-      <div ref={chatRef} className="relative z-20 h-full sm:h-auto">
-        <ChatWindow character={character} />
+      {/* CENTER CHAT ONLY ON MOBILE */}
+      <div className="flex-1 flex items-center justify-center sm:block">
+        <div ref={chatRef} className="relative z-20 w-full max-w-md sm:max-w-none">
+          <ChatWindow character={character} />
+        </div>
       </div>
 
-      {/* Hide floating phrases on mobile for better UX */}
+      {/* FLOATING PHRASES */}
       {phrases.length > 0 && window.innerWidth >= 768 &&
         phrasePositions.map((pos, i) => (
           <div
