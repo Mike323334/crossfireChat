@@ -2,18 +2,18 @@ import React from "react";
 
 export default function CharacterSelector({ setCharacter }) {
   return (
-    <div className="flex justify-center gap-4">
+    <div className="flex justify-center gap-6">
       <button
         onClick={() => setCharacter("Eva")}
-        className="bg-primary text-white px-6 py-2 rounded-lg shadow hover:bg-accent transition"
+        className="bg-gradient-to-r from-primary to-red-600 text-white px-8 py-3 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 font-semibold text-lg"
       >
-        Eva
+        💃 Eva
       </button>
       <button
         onClick={() => setCharacter("Gideon")}
-        className="bg-primary text-white px-6 py-2 rounded-lg shadow hover:bg-accent transition"
+        className="bg-gradient-to-r from-primary to-red-600 text-white px-8 py-3 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 font-semibold text-lg"
       >
-        Gideon
+        👔 Gideon
       </button>
     </div>
   );

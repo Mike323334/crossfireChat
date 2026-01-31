@@ -150,14 +150,14 @@ export default function ChatPage({ character, setCharacter }) {
   }, [character, chatBounds]);
 
   return (
-    <div className="w-full max-w-2xl p-6 relative">
+    <div className="w-full max-w-4xl p-4 md:p-6 relative min-h-screen">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-title text-primary">
+        <h2 className="text-xl md:text-2xl font-title text-primary">
           Chateando con {character}
         </h2>
         <button
           onClick={() => setCharacter(null)}
-          className="text-gray-600 hover:text-primary"
+          className="text-gray-600 hover:text-primary text-sm md:text-base"
         >
           Volver
         </button>
@@ -167,7 +167,8 @@ export default function ChatPage({ character, setCharacter }) {
         <ChatWindow character={character} />
       </div>
 
-      {phrases.length > 0 &&
+      {/* Hide floating phrases on mobile for better UX */}
+      {phrases.length > 0 && window.innerWidth >= 768 &&
         phrasePositions.map((pos, i) => (
           <div
             key={i}

@@ -36,9 +36,9 @@ export default function ChatWindow({ character }) {
   };
 
   return (
-    <div className="flex flex-col border rounded-lg p-4 bg-white shadow">
+    <div className="flex flex-col border rounded-lg p-4 bg-white shadow h-80 md:h-96">
       {/* MESSAGES */}
-      <div className="flex-1 overflow-y-scroll h-96 mb-4 space-y-2">
+      <div className="flex-1 overflow-y-auto mb-4 space-y-2 min-h-0">
         {messages.map((m, i) => {
           const isUser = m.sender === "usuario";
 
@@ -48,10 +48,10 @@ export default function ChatWindow({ character }) {
               className={`w-full flex ${isUser ? "justify-end" : "justify-start"}`}
             >
               <div
-                className={`p-3 rounded-lg break-words ${
+                className={`p-3 rounded-lg break-words max-w-xs md:max-w-md lg:max-w-lg ${
                   isUser
-                    ? "w-full bg-primary text-white"
-                    : "w-full bg-accent text-gray-800"
+                    ? "bg-primary text-white"
+                    : "bg-accent text-gray-800"
                 }`}
               >
                 {m.text}
@@ -62,7 +62,7 @@ export default function ChatWindow({ character }) {
       </div>
 
       {/* INPUT AREA */}
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         <input
           className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
           value={input}
@@ -71,7 +71,7 @@ export default function ChatWindow({ character }) {
           onKeyDown={e => e.key === "Enter" && handleSend()}
         />
         <button
-          className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-accent transition"
+          className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-accent transition whitespace-nowrap"
           onClick={handleSend}
         >
           Enviar
