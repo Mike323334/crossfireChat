@@ -66,10 +66,10 @@ export default function ChatPage({ character, setCharacter }) {
         box = {
           left: GAP + Math.random() * (windowW - PHRASE_W - GAP * 2),
           top: GAP + Math.random() * (windowH - PHRASE_H - GAP * 2),
-          dx: (Math.random() - 0.5) * 0.12, // Very slow, gentle movement
-          dy: (Math.random() - 0.5) * 0.12,
-          vx: (Math.random() - 0.5) * 0.12, // Very slow velocity for gentle floating
-          vy: (Math.random() - 0.5) * 0.12
+          dx: (Math.random() - 0.5) * 0.05, // Extremely slow, gentle movement
+          dy: (Math.random() - 0.5) * 0.05,
+          vx: (Math.random() - 0.5) * 0.05, // Extremely slow velocity for very gentle floating
+          vy: (Math.random() - 0.5) * 0.05
         };
         tries++;
       } while (
@@ -102,18 +102,18 @@ export default function ChatPage({ character, setCharacter }) {
           // Natural bounce off edges with damping
           if (left < GAP) {
             left = GAP;
-            vx = Math.abs(vx) * 0.9; // Damping for natural bounce
+            vx = Math.abs(vx) * 0.85; // More damping for smoother, slower bounce
           } else if (left > maxX) {
             left = maxX;
-            vx = -Math.abs(vx) * 0.9;
+            vx = -Math.abs(vx) * 0.85;
           }
 
           if (top < GAP) {
             top = GAP;
-            vy = Math.abs(vy) * 0.9;
+            vy = Math.abs(vy) * 0.85;
           } else if (top > maxY) {
             top = maxY;
-            vy = -Math.abs(vy) * 0.9;
+            vy = -Math.abs(vy) * 0.85;
           }
 
           return { top, left, dx, dy, vx, vy };
@@ -155,7 +155,7 @@ export default function ChatPage({ character, setCharacter }) {
               const dotProduct = relativeVx * nx + relativeVy * ny;
 
               if (dotProduct < 0) {
-                const bounce = 0.8; // Bounce coefficient
+                const bounce = 0.6; // Lower bounce coefficient for slower, smoother collisions
                 updated[i].vx += nx * dotProduct * bounce;
                 updated[i].vy += ny * dotProduct * bounce;
                 updated[j].vx -= nx * dotProduct * bounce;
