@@ -24,6 +24,10 @@ export default function ChatPage({ character, setCharacter }) {
 
   // 💬 Gideon phrases
   const gideonPhrases = [
+    "I'd rather not think about the past, it's the present that concerns me, especially when it comes to him, Gideon.",
+    "Mi vida con Gideon es un torbellino de pasión y peligro, pero no cambiaría nada por el mundo.",
+    "What's on your mind, beautiful? You seem a little distracted. Is everything all right?",
+    "Eva, eres la única que ha podido calmar la tormenta que hay dentro de mí, la única que ha podido hacer que me sienta vivo de nuevo.",
     "My entire existence has been defined by my need for you, Eva. You're the reason I breathe, the reason I live.",
     "Eres la única persona que ha logrado hacer que me sienta vivo...",
     "La pasión que arde dentro de mí es difícil de controlar cuando estoy cerca de ti, Eva.",

@@ -38,7 +38,7 @@ export default function ChatWindow({ character }) {
   return (
     <div className="flex flex-col border rounded-lg p-2 sm:p-4 bg-white shadow h-screen sm:h-80 md:h-96">
       {/* MESSAGES */}
-      <div className="flex-1 overflow-y-auto mb-2 sm:mb-4 space-y-2 min-h-0">
+      <div className="flex-1 overflow-y-auto scrollbar-hide mb-2 sm:mb-4 space-y-2 min-h-0">
         {messages.map((m, i) => {
           const isUser = m.sender === "usuario";
 
@@ -64,14 +64,14 @@ export default function ChatWindow({ character }) {
       {/* INPUT AREA */}
       <div className="flex flex-col sm:flex-row gap-2">
         <input
-          className="flex-1 p-2 sm:p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm sm:text-base"
+          className="flex-1 p-3 sm:p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base sm:text-base"
           value={input}
           onChange={e => setInput(e.target.value)}
           placeholder="Escribe tu mensaje..."
           onKeyDown={e => e.key === "Enter" && handleSend()}
         />
         <button
-          className="bg-primary text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-accent transition whitespace-nowrap text-sm sm:text-base"
+          className="bg-primary text-white px-4 sm:px-4 py-3 rounded-lg hover:bg-accent transition whitespace-nowrap text-base sm:text-base font-semibold"
           onClick={handleSend}
         >
           Enviar
