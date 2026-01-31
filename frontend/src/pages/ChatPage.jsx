@@ -10,7 +10,6 @@ export default function ChatPage({ character, setCharacter }) {
   const PHRASE_W = 260;
   const PHRASE_H = 110;
   const GAP = 20;
-  const MIN_DISTANCE = PHRASE_W + 30; // Minimum distance between bubbles
 
   const evaPhrases = [
     
@@ -78,11 +77,11 @@ export default function ChatPage({ character, setCharacter }) {
       const newBubbles = [];
       const positions = [];
 
-      // Generate static positions around the chat window
+      // Generate static positions around the chat window - allow overlapping between bubbles
       phrases.forEach((_, index) => {
         let position;
         let tries = 0;
-        const maxTries = 300;
+        const maxTries = 100;
 
         do {
           // Distribute bubbles evenly around the chat
@@ -121,13 +120,12 @@ export default function ChatPage({ character, setCharacter }) {
           tries++;
         } while (
           (isOverlappingChat(position, chatBounds) || 
-           isOverlappingTitle(position, titleBounds) ||
-           positions.some(p => isTooClose(p, position))) && 
+           isOverlappingTitle(position, titleBounds)) && 
           tries < maxTries
         );
 
+        // Always add position, even if it overlaps with other bubbles (that's allowed)
         if (tries < maxTries) {
-          positions.push(position);
           newBubbles.push(position);
         }
       });
@@ -153,14 +151,6 @@ export default function ChatPage({ character, setCharacter }) {
     };
   }, [phrases, chatBounds, titleBounds]);
 
-  const isTooClose = (a, b) => {
-    const center1 = { x: a.left + PHRASE_W / 2, y: a.top + PHRASE_H / 2 };
-    const center2 = { x: b.left + PHRASE_W / 2, y: b.top + PHRASE_H / 2 };
-    const dx = center2.x - center1.x;
-    const dy = center2.y - center1.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    return distance < MIN_DISTANCE;
-  };
 
   const isOverlappingChat = (bubble, chatBounds) => {
     if (!chatBounds) return false;
@@ -220,8 +210,9 @@ export default function ChatPage({ character, setCharacter }) {
             left: `${b.left}px`,
             top: `${b.top}px`,
             transform: 'none',
-            animation: 'none',
-            transition: 'none'
+            animation: 'none !important',
+            transition: 'none !important',
+            willChange: 'auto'
           }}
         >
           <div className={styles.phraseBubble}>{phrases[i]}</div>

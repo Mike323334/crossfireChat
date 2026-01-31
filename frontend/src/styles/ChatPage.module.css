@@ -1,10 +1,11 @@
 .floatingPhrase {
-  position: fixed;
+  position: fixed !important;
   pointer-events: none;
   z-index: 5;
-  will-change: auto;
+  will-change: auto !important;
   animation: none !important;
   transition: none !important;
+  transform: none !important;
 }
 
 .phraseBubble {
