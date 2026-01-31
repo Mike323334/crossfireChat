@@ -38,10 +38,16 @@ export default function ChatWindow({ character }) {
   }, [messages]);
 
   return (
-    <div className="flex flex-col border rounded-lg p-2 sm:p-4 bg-white shadow h-screen sm:h-80 md:h-96">
-      
+    <div
+      className="
+        flex flex-col border rounded-lg p-2 sm:p-4 bg-white shadow
+        h-screen sm:h-80 md:h-96
+        justify-center sm:justify-start
+        max-w-md mx-auto
+      "
+    >
       {/* MESSAGES */}
-      <div className="flex-1 overflow-y-auto scrollbar-hide mb-2 sm:mb-4 space-y-2 min-h-0">
+      <div className="flex-1 overflow-y-auto scrollbar-hide mb-2 sm:mb-4 space-y-2 min-h-0 max-h-[60vh] sm:max-h-none">
         {messages.map((m, i) => {
           const isUser = m.sender === "usuario";
 
@@ -51,7 +57,7 @@ export default function ChatWindow({ character }) {
               className={`w-full flex ${isUser ? "justify-end" : "justify-start"}`}
             >
               <div
-                className={`p-3 sm:p-3 rounded-lg break-words 
+                className={`p-3 rounded-lg break-words 
                 text-xl sm:text-lg 
                 max-w-xs md:max-w-md lg:max-w-lg ${
                   isUser
