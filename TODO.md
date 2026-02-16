@@ -1,29 +1,65 @@
-# Make App Responsive
+# Documentation Plan for CrossfireChat
 
 ## Information Gathered
-- App uses React with Tailwind CSS
-- HomePage has some responsive classes (md:flex-row, etc.)
-- ChatPage: Container uses max-w-2xl, but floating phrases are absolutely positioned with fixed pixels
-- ChatWindow: Fixed height h-96 for messages, input/button layout
-- main.css: Fixed widths/heights (e.g., height: 400px, width: 70%)
-- ChatPage.module.css: Fixed dimensions for floating phrases (260px x 110px)
+
+### Project Overview
+- **Project Name**: CrossfireChat / Desnuda ante ti
+- **Purpose**: Interactive chat application with characters from Sylvia Day's Crossfire series
+- **Characters**: Eva Tramell and Gideon Cross
+- **Language**: Bilingual (Spanish/English) with automatic language detection
+
+### Technology Stack
+**Backend:**
+- FastAPI (Python web framework)
+- Groq API (Llama-3.3-70b-versatile model)
+- FastText (language detection)
+- pdfplumber (PDF text extraction)
+- langdetect (fallback language detection)
+
+**Frontend:**
+- React 18.2.0
+- Vite (build tool)
+- Tailwind CSS (styling)
+- Custom CSS modules
+
+### Key Files
+- backend/app.py - FastAPI application setup
+- backend/routes.py - API endpoints
+- backend/groq_client.py - Groq API integration with language detection
+- backend/search.py - RAG search (placeholder)
+- backend/utils.py - PDF processing and text chunking
+- backend/config.py - Configuration and book paths
+- frontend/src/App.jsx - Main React component
+- frontend/src/pages/HomePage.jsx - Home page with character selection
+- frontend/src/pages/ChatPage.jsx - Chat interface
+- frontend/src/components/ChatWindow.jsx - Chat component
+- frontend/src/api/chatApi.js - API client
 
 ## Plan
-- Update ChatPage.jsx: Make container responsive with breakpoints, adjust floating phrases to scale or hide on mobile
-- Update ChatWindow.jsx: Use responsive heights (vh units), improve mobile layout
-- Update main.css: Replace fixed values with responsive units
-- Update ChatPage.module.css: Make phrase bubbles responsive
-- Minor tweaks to HomePage.jsx and CharacterSelector.jsx if needed
 
-## Dependent Files
-- [x] frontend/src/pages/ChatPage.jsx
-- [x] frontend/src/components/ChatWindow.jsx
-- [x] frontend/src/styles/main.css
-- [x] frontend/src/styles/ChatPage.module.css
-- [x] frontend/src/pages/HomePage.jsx (minor)
-- [x] frontend/src/components/CharacterSelector.jsx (minor)
+### 1. Create comprehensive README.md
+- Project description
+- Features
+- Technology stack
+- Installation instructions
+- Usage instructions
+- Deployment information
+- API documentation
+- License
+
+### 2. Create CONTRIBUTING.md (optional)
+- Contribution guidelines
+- Code style
+- Pull request process
+
+### 3. Create API.md (optional)
+- API endpoints documentation
+- Request/response formats
+
+## Dependent Files to be Created/Updated
+- [ ] README.md - Main documentation
+- [ ] TODO.md - Update with completed status
 
 ## Followup Steps
-- Test responsiveness on different screen sizes
-- Ensure touch-friendly on mobile
-- Verify no layout breaks
+- [ ] Verify the documentation is complete and accurate
+- [ ] Add any missing information
